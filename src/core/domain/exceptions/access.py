@@ -1,0 +1,4 @@
+
+
+class DomainAccessDeniedError(Exception):
+    pass
