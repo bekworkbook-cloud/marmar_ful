@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="ru" class="h-full">
+<head>
+    <meta charset="UTF-8">
+
+
+
+    <title>Филиалы</title>
+
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <link
+        href="
+            https://fonts.googleapis.com/css2?
+            family=Outfit:wght@300;400;500;600;700&
+            display=swap
+        "
+        rel="stylesheet"
+    >
+
+    <style>
+        * {
+            font-family: 'Outfit', sans-serif;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+        }
+
+        body {
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-up {
+            animation: fadeUp .4s ease both;
+        }
+    </style>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        surface: '#0f172a',
+                        card: '#1e293b',
+                        accent: '#f59e0b',
+                        accentSoft: '#78350f',
+                        txt: '#e2e8f0',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-surface text-txt">
+
+<div class="
+    min-h-screen
+    flex
+    flex-col
+">
+
+    <!-- HEADER -->
+    <header class="
+        sticky
+        top-0
+        z-10
+
+        bg-surface/95
+        backdrop-blur
+
+        border-b
+        border-slate-800
+
+        px-5
+        pt-[calc(env(safe-area-inset-top)+16px)]
+        pb-4
+    ">
+
+        <div class="
+            flex
+            items-center
+            justify-between
+        ">
+
+            <div>
+
+                <h1 class="
+                    text-3xl
+                    font-bold
+                ">
+                    Филиалы
+                </h1>
+
+                <div class="
+                    text-sm
+                    text-slate-400
+                    mt-1
+                ">
+                    Выберите филиал
+                </div>
+
+            </div>
+
+            <div class="
+                w-14
+                h-14
+                rounded-2xl
+                bg-accentSoft
+
+                flex
+                items-center
+                justify-center
+            ">
+                <i
+                    data-lucide="store"
+                    class="w-7 h-7 text-accent"
+                ></i>
+            </div>
+
+        </div>
+
+    </header>
+
+    <!-- CONTENT -->
+    <main class="
+        flex-1
+        overflow-y-auto
+
+        px-5
+        py-5
+        pb-[calc(env(safe-area-inset-bottom)+24px)]
+    ">
+
+        <div
+            id="branches"
+            class="
+                flex
+                flex-col
+                gap-4
+            "
+        ></div>
+
+    </main>
+
+</div>
+
+<script type="module">
+    import { apiFetch } from "/static/pages/customer/js/api.js";
+
+lucide.createIcons();
+
+Telegram.WebApp.ready();
+Telegram.WebApp.expand();
+
+Telegram.WebApp.BackButton.show();
+
+Telegram.WebApp.BackButton.onClick(() => {
+    history.back();
+});
+
+const branchesContainer =
+    document.getElementById("branches");
+
+async function loadBranches() {
+    try {
+        const response = await apiFetch("/branches/");
+        if (!response) {
+            throw new Error("Сервер вернул пустой ответ (или сработал редирект 401)");
+        }
+        const data = await response.json();
+        renderBranches(data.branches);
+    } catch (error) {
+        console.error(error);
+        
+        // Выводим точную техническую ошибку прямо на экран iPhone
+        branchesContainer.innerHTML = `
+            <div class="bg-red-950/50 border border-red-800/50 rounded-2xl p-5 text-red-300">
+                <div class="font-semibold text-lg mb-1">Ошибка загрузки</div>
+                <div class="text-xs font-mono text-red-400 bg-black/30 p-3 rounded-xl mt-2 break-all">
+                    ${error.name}: ${error.message}
+                </div>
+                <div class="text-[11px] text-slate-500 mt-2 font-mono">
+                    Origin: ${window.location.origin}
+                </div>
+            </div>
+        `;
+    }
+}
+function renderBranches(branches) {
+    branchesContainer.innerHTML = "";
+
+    branches.forEach((branch, index) => {
+
+        const div =
+            document.createElement("button");
+
+        div.className = `
+            fade-up
+
+            bg-card
+            rounded-3xl
+
+            p-5
+
+            text-left
+
+            transition
+            active:scale-[0.98]
+        `;
+
+        div.style.animationDelay =
+            `${index * 0.05}s`;
+
+        div.innerHTML = `
+            <div class="
+                flex
+                items-start
+                justify-between
+                gap-4
+            ">
+
+                <div class="flex-1">
+
+                    <div class="
+                        text-xl
+                        font-semibold
+                    ">
+                        ${branch.name}
+                    </div>
+
+                    <div class="
+                        text-slate-400
+                        text-sm
+                        mt-2
+                        leading-relaxed
+                    ">
+                        ${branch.address}
+                    </div>
+
+                    ${
+                        branch.landmark
+                        ? `
+                            <div class="
+                                text-xs
+                                text-slate-500
+                                mt-2
+                            ">
+                                ${branch.landmark}
+                            </div>
+                        `
+                        : ""
+                    }
+
+                </div>
+
+                <div class="
+                    w-12
+                    h-12
+                    rounded-2xl
+                    bg-slate-800
+
+                    flex
+                    items-center
+                    justify-center
+
+                    shrink-0
+                ">
+                    <i
+                        data-lucide="chevron-right"
+                        class="
+                            w-5
+                            h-5
+                            text-accent
+                        "
+                    ></i>
+                </div>
+
+            </div>
+        `;
+
+        div.onclick = () => {
+            openBranch(branch);
+        };
+
+        branchesContainer.appendChild(div);
+    });
+
+    lucide.createIcons();
+}
+
+function openBranch(branch) {
+
+    localStorage.setItem(
+        "selected_branch",
+        JSON.stringify(branch)
+    );
+
+    window.location.href =
+        `/static/pages/customer/categories.html?branch_id=${branch.id}`;
+}
+
+loadBranches();
+</script>
+
+</body>
+</html>

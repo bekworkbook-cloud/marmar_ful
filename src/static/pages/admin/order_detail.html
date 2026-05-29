@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="ru" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Детали заказа</title>
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Outfit', sans-serif; }
+        html, body { height: 100%; margin: 0; box-sizing: border-box; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-up { animation: fadeUp .4s ease both; }
+        .fade-d1 { animation-delay: .05s; }
+        .fade-d2 { animation-delay: .1s; }
+        .fade-d3 { animation-delay: .15s; }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: { colors: { surface: '#0f172a', card: '#1e293b', accent: '#f59e0b', accentSoft: '#78350f', txt: '#e2e8f0' } }
+            }
+        }
+    </script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body class="h-full bg-surface text-txt overflow-auto">
+    <div class="p-6 max-w-6xl mx-auto w-full mt-4 lg:mt-6">
+        
+        <button onclick="goBack()" class="inline-flex items-center gap-2 text-slate-400 hover:text-white mb-6 transition-colors fade-up">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i> Назад к дашборду
+        </button>
+
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 fade-up fade-d1">
+            <div>
+                <h1 class="text-2xl font-bold text-white flex items-center gap-3">
+                    Заказ #<span id="order-id-title">...</span>
+                    <span id="order-status-badge"></span>
+                </h1>
+                <p class="text-sm text-slate-400 mt-1">Оформлен: <span id="order-date">...</span></p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 space-y-6 fade-up fade-d2">
+                <div class="bg-card rounded-xl p-5 border border-white/5 shadow-lg">
+                    <h2 class="font-semibold text-white mb-4 flex items-center gap-2">
+                        <i data-lucide="shopping-cart" class="w-4 h-4 text-accent"></i> Состав заказа
+                    </h2>
+                    
+                    <button id="edit-order-btn" class="hidden inline-flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-slate-300 hover:text-white px-4 py-2 rounded-lg mb-6 transition-all shadow-sm">
+                        <i data-lucide="edit-2" class="w-4 h-4"></i> Изменить заказ
+                    </button>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="text-slate-500 text-xs uppercase tracking-wider border-b border-white/5">
+                                    <th class="text-left pb-3 font-medium">Товар (ID)</th>
+                                    <th class="text-center pb-3 font-medium">Кол-во</th>
+                                    <th class="text-right pb-3 font-medium">Цена</th>
+                                    <th class="text-right pb-3 font-medium">Итого</th>
+                                </tr>
+                            </thead>
+                            <tbody id="order-items-tbody" class="divide-y divide-white/5">
+                                </tbody>
+                        </table>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-t border-white/5 flex flex-col gap-2">
+                        <div class="flex justify-between items-center mt-2 pt-2 border-t border-white/5">
+                            <span class="text-lg font-bold text-white">Итого:</span>
+                            <span class="text-xl font-bold text-accent"><span id="order-total-price">0</span> сум</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-6 fade-up fade-d3">
+                
+                <div id="confirm-order-block" class="hidden bg-emerald-500/5 rounded-xl p-5 border border-emerald-500/20 shadow-lg shadow-emerald-500/5">
+                    <h3 class="text-sm font-medium text-emerald-400 mb-3 flex items-center gap-2">
+                        <i data-lucide="bell" class="w-4 h-4"></i> Новый заказ
+                    </h3>
+                    <button onclick="confirmOrder()" class="w-full inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-4 rounded-xl transition-all active:scale-95 shadow-lg shadow-emerald-600/20 group">
+                        <i data-lucide="check-circle" class="w-5 h-5 group-hover:scale-110 transition-transform"></i>
+                        Подтвердить заказ
+                    </button>
+                    <p class="text-[10px] text-emerald-500/60 mt-3 text-center uppercase tracking-widest font-medium">
+                        Проверьте состав перед нажатием
+                    </p>
+                </div>
+
+                <div class="bg-card rounded-xl p-5 border border-white/5 shadow-lg">
+                    <h2 class="font-semibold text-white mb-4 flex items-center gap-2">
+                        <i data-lucide="map-pin" class="w-4 h-4 text-accent"></i> Доставка
+                    </h2>
+                    <div class="space-y-4">
+                        <div>
+                            <p class="text-xs text-slate-500 uppercase tracking-wider mb-1">Клиент ID</p>
+                            <div class="flex items-center gap-2 text-white">
+                                <i data-lucide="user" class="w-4 h-4 text-slate-400"></i>
+                                <span id="customer-info">...</span>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500 uppercase tracking-wider mb-1">Адрес</p>
+                            <p id="order-address" class="text-slate-300 text-sm">...</p>
+                        </div>
+                        <div id="landmark-container" class="hidden">
+                            <p class="text-xs text-slate-500 uppercase tracking-wider mb-1">Ориентир</p>
+                            <p id="order-landmark" class="text-slate-300 text-sm bg-white/5 p-2 rounded-md border border-white/10">...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/v1';
+
+        function formatCurrency(num) {
+            return new Intl.NumberFormat('ru-RU').format(num);
+        }
+
+        function goBack() {
+            // Либо history.back(), либо перенаправление на страницу дашборда
+            window.location.href = 'admin_dashboard.html'; 
+        }
+
+        async function fetchAPI(endpoint) {
+            const token = localStorage.getItem('jwt');
+            if (!token) throw new Error("JWT отсутствует");
+
+            const response = await fetch(`${API_BASE}${endpoint}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error(`Ошибка загрузки ${endpoint}`);
+            return await response.json();
+        }
+
+        async function loadOrderDetails() {
+            try {
+                // Получаем ID заказа из URL (например: order_detail.html?order_id=5)
+                const urlParams = new URLSearchParams(window.location.search);
+                const orderId = urlParams.get('order_id');
+
+                if (!orderId) {
+                    alert("ID заказа не указан");
+                    return;
+                }
+
+                // Загружаем сам заказ и его состав
+                const [order, itemsData] = await Promise.all([
+                    fetchAPI(`/orders/${orderId}`),
+                    fetchAPI(`/orders/${orderId}/items?limit=100`)
+                ]);
+
+                // 1. Отрисовка базовой информации
+                document.getElementById('order-id-title').textContent = order.id;
+                document.getElementById('order-date').textContent = "Дата не передана в DTO"; // В DTO нет created_at
+                document.getElementById('order-total-price').textContent = formatCurrency(order.total_price);
+                
+                // Бейдж статуса
+                const statusBadge = document.getElementById('order-status-badge');
+                if (order.status.toLowerCase() === 'доставлен') {
+                    statusBadge.className = "text-emerald-400 bg-emerald-400/10 px-3 py-1 rounded-md text-xs uppercase tracking-wider font-medium border border-emerald-500/20";
+                    statusBadge.textContent = "Доставлен";
+                } else if (order.status.toLowerCase() === 'отменен') {
+                    statusBadge.className = "text-red-400 bg-red-400/10 px-3 py-1 rounded-md text-xs uppercase tracking-wider font-medium border border-red-500/20";
+                    statusBadge.textContent = "Отменен";
+                } else {
+                    statusBadge.className = "text-accent bg-accent/10 px-3 py-1 rounded-md text-xs uppercase tracking-wider font-medium border border-accent/20";
+                    statusBadge.textContent = order.status;
+                }
+
+                // 2. Логика кнопок (Зависит от статуса)
+                if (order.status.toLowerCase() === 'ожидает подтверждения') {
+                    document.getElementById('confirm-order-block').classList.remove('hidden');
+                    document.getElementById('edit-order-btn').classList.remove('hidden'); // Кнопка редактирования
+                }
+
+                // 3. Блок доставки
+                document.getElementById('customer-info').textContent = `Клиент #${order.customer_id}`;
+                document.getElementById('order-address').textContent = order.address || 'Не указан';
+                if (order.landmark) {
+                    document.getElementById('landmark-container').classList.remove('hidden');
+                    document.getElementById('order-landmark').textContent = order.landmark;
+                }
+
+                // 4. Отрисовка состава заказа
+                const tbody = document.getElementById('order-items-tbody');
+                const items = itemsData.order_items || [];
+
+                if (items.length > 0) {
+                    tbody.innerHTML = items.map(item => {
+                        const total = item.quantity * item.price_at_purchase;
+                        // Так как в OrderItemDTO нет имени продукта (только product_id), выводим ID.
+                        // Идеально было бы сделать fetch(`/products/${item.product_id}`) для каждого товара, 
+                        // но это может замедлить загрузку.
+                        return `
+                            <tr class="text-slate-300 hover:bg-white/5 transition-colors">
+                                <td class="py-3 flex items-center gap-3">
+                                    <p>Товар #${item.product_id}</p>
+                                </td>
+                                <td class="py-3 text-center">${item.quantity} шт.</td>
+                                <td class="py-3 text-right text-slate-400">${formatCurrency(item.price_at_purchase)}</td>
+                                <td class="py-3 text-right font-medium text-white">${formatCurrency(total)} сум</td>
+                            </tr>
+                        `;
+                    }).join('');
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-slate-500">Список товаров пуст</td></tr>`;
+                }
+
+                lucide.createIcons();
+
+            } catch (error) {
+                console.error("Ошибка загрузки данных заказа:", error);
+                alert("Не удалось загрузить данные заказа.");
+            }
+        }
+
+        // Функция подтверждения заказа (PATCH запрос)
+        async function confirmOrder() {
+            try {
+                const urlParams = new URLSearchParams(window.location.search);
+                const orderId = urlParams.get('order_id');
+                const token = localStorage.getItem('jwt');
+
+                // Используем твой эндпоинт для принятия заказа
+                const response = await fetch(`${API_BASE}/orders/${orderId}/accept`, {
+                    method: 'PATCH',
+                    headers: { 
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ is_accepted: true })
+                });
+
+                if (!response.ok) throw new Error("Ошибка при подтверждении");
+                
+                alert("Заказ успешно подтвержден!");
+                // Перезагружаем страницу, чтобы обновить статусы
+                window.location.reload();
+
+            } catch (error) {
+                console.error(error);
+                alert("Ошибка подтверждения заказа");
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            loadOrderDetails();
+        });
+    </script>
+</body>
+</html>

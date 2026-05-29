@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from src.core.domain.entities.branch import Branch
 
 
-class BrachRepository(ABC):
+class BranchRepository(ABC):
     
     @abstractmethod
     async def add(self, branch: int) -> Branch:
@@ -14,15 +14,18 @@ class BrachRepository(ABC):
         pass
 
     @abstractmethod
-
-    @abstractmethod
-    async def update(self, branch: Branch) -> Branch:
+    async def get_all(self) -> list[Branch]:
         pass
 
     @abstractmethod
-    async def delete(self, branch_id: int):
+    async def update(self, branch_entity: Branch) -> Branch:
         pass
 
     @abstractmethod
-    async def list(self, limit: int = 10, offset: int = 0, **filters) -> list[Branch]:
+    async def delete(self, branch_id: int) -> Branch:
         pass
+
+    @abstractmethod
+    async def get_list(self, limit: int = 10, offset: int = 0, **filters) -> list[Branch]:
+        pass
+    

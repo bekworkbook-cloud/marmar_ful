@@ -1,8 +1,10 @@
 import enum
 
+import bcrypt
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from aiogram import Bot, Dispatcher
 from src.core.domain.enums.roles import UserRole
+from fastapi.security import OAuth2PasswordBearer
 
 class Settings(BaseSettings):
     ADMIN_BOT_TOKEN: str
@@ -14,6 +16,17 @@ class Settings(BaseSettings):
     API_URL: str
     API_PASS: str
     API_BRANCHES: str
+
+    SECRET_KEY: str
+    ALGORITHM: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: str
+
+    CLICK_TEST_TOKEN: str
+    PAYCOM_TEST_TOKEN: str
+
+    PAYCOM_LIVE_TOKEN: str
+    CLICK_LIVE_TOKEN: str
+    
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
@@ -47,6 +60,19 @@ class Bots:
             "customer_bot": Dispatcher(),
             "operator_bot": Dispatcher(),
         }
+        self.bot_tokens = {
+            "admin_bot": settings.ADMIN_BOT_TOKEN,
+            "courier_bot": settings.COURIER_BOT_TOKEN,
+            "customer_bot": settings.CUSTOMER_BOT_TOKEN,
+            "operator_bot": settings.OPERATOR_BOT_TOKEN,
+        }
+
+class AuthPwd:
+    def __init__(self):
+        self.oauth2_schema = OAuth2PasswordBearer(tokenUrl='/api/v1/auth/token')
+
 
 settings = Settings()
 bots = Bots(settings)
+
+auth_pwd = AuthPwd()

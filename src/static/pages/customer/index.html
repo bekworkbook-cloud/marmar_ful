@@ -1,0 +1,353 @@
+<!doctype html>
+<html lang="ru" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <title>Mar Marr</title>
+
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <link
+        href="
+            https://fonts.googleapis.com/css2?
+            family=Outfit:wght@300;400;500;600;700&
+            display=swap
+        "
+        rel="stylesheet"
+    >
+
+    <style>
+        * {
+            font-family: 'Outfit', sans-serif;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-up {
+            animation: fadeUp .4s ease both;
+        }
+    </style>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        surface: '#0f172a',
+                        card: '#1e293b',
+                        accent: '#f59e0b',
+                        accentSoft: '#78350f',
+                        txt: '#e2e8f0',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="h-full bg-surface text-txt overflow-hidden">
+
+<div class="h-full flex flex-col">
+
+    <!-- HEADER -->
+    <header class="
+        px-5
+        pt-8
+        pb-4
+        border-b
+        border-slate-800
+        bg-surface/95
+        backdrop-blur
+    ">
+        <div class="flex items-center justify-between">
+
+            <div>
+                <div class="text-3xl font-bold">
+                    Mar Marr
+                </div>
+
+                <div class="text-sm text-slate-400 mt-1">
+                    Добро пожаловать
+                </div>
+            </div>
+            a
+
+            <div class="
+                w-14
+                h-14
+                rounded-2xl
+                bg-accentSoft
+                flex
+                items-center
+                justify-center
+            ">
+                <i
+                    data-lucide="shopping-bag"
+                    class="w-7 h-7 text-accent"
+                ></i>
+            </div>
+
+        </div>
+    </header>
+
+    <!-- CONTENT -->
+    <main class="
+        flex-1
+        overflow-y-auto
+        px-5
+        py-5
+    ">
+
+        <div class="
+            grid
+            grid-cols-1
+            gap-4
+        ">
+
+            <!-- MENU -->
+            <button
+                onclick="goToMenu()"
+                class="
+                    fade-up
+                    bg-card
+                    rounded-3xl
+                    p-5
+                    text-left
+                    transition
+                    active:scale-[0.98]
+                "
+            >
+                <div class="
+                    flex
+                    items-center
+                    justify-between
+                ">
+
+                    <div>
+
+                        <div class="
+                            text-xl
+                            font-semibold
+                        ">
+                            Меню
+                        </div>
+
+                        <div class="
+                            text-sm
+                            text-slate-400
+                            mt-1
+                        ">
+                            Категории и товары
+                        </div>
+
+                    </div>
+
+                    <div class="
+                        w-14
+                        h-14
+                        rounded-2xl
+                        bg-slate-800
+                        flex
+                        items-center
+                        justify-center
+                    ">
+                        <i
+                            data-lucide="utensils-crossed"
+                            class="w-6 h-6 text-accent"
+                        ></i>
+                    </div>
+
+                </div>
+            </button>
+
+            <!-- CART -->
+            <button
+                onclick="goToCart()"
+                class="
+                    fade-up
+                    bg-card
+                    rounded-3xl
+                    p-5
+                    text-left
+                    transition
+                    active:scale-[0.98]
+                "
+                style="animation-delay: .05s;"
+            >
+                <div class="
+                    flex
+                    items-center
+                    justify-between
+                ">
+
+                    <div>
+
+                        <div class="
+                            text-xl
+                            font-semibold
+                        ">
+                            Корзина
+                        </div>
+
+                        <div class="
+                            text-sm
+                            text-slate-400
+                            mt-1
+                        ">
+                            Ваши товары
+                        </div>
+
+                    </div>
+
+                    <div class="
+                        w-14
+                        h-14
+                        rounded-2xl
+                        bg-slate-800
+                        flex
+                        items-center
+                        justify-center
+                    ">
+                        <i
+                            data-lucide="shopping-cart"
+                            class="w-6 h-6 text-accent"
+                        ></i>
+                    </div>
+
+                </div>
+            </button>
+
+            <!-- ORDERS -->
+            <button
+                onclick="goToOrders()"
+                class="
+                    fade-up
+                    bg-card
+                    rounded-3xl
+                    p-5
+                    text-left
+                    transition
+                    active:scale-[0.98]
+                "
+                style="animation-delay: .1s;"
+            >
+                <div class="
+                    flex
+                    items-center
+                    justify-between
+                ">
+
+                    <div>
+
+                        <div class="
+                            text-xl
+                            font-semibold
+                        ">
+                            Мои заказы
+                        </div>
+
+                        <div class="
+                            text-sm
+                            text-slate-400
+                            mt-1
+                        ">
+                            История заказов
+                        </div>
+
+                    </div>
+
+                    <div class="
+                        w-14
+                        h-14
+                        rounded-2xl
+                        bg-slate-800
+                        flex
+                        items-center
+                        justify-center
+                    ">
+                        <i
+                            data-lucide="receipt"
+                            class="w-6 h-6 text-accent"
+                        ></i>
+                    </div>
+
+                </div>
+            </button>
+
+        </div>
+
+    </main>
+
+</div>
+
+<script>
+
+Telegram.WebApp.ready();
+Telegram.WebApp.expand();
+
+Telegram.WebApp.BackButton.show();
+
+Telegram.WebApp.BackButton.onClick(() => {
+    history.back();
+});
+
+lucide.createIcons();
+
+function goToMenu() {
+    window.location.href =
+        "/static/pages/customer/menu.html";
+}
+
+function goToCart() {
+    window.location.href =
+        "/static/pages/customer/cart.html";
+}
+
+function goToOrders() {
+    window.location.href =
+        "/static/pages/customer/orders.html";
+}
+
+if (
+    window.Telegram &&
+    Telegram.WebApp
+) {
+    Telegram.WebApp.ready();
+    Telegram.WebApp.expand();
+    Telegram.WebApp.BackButton.hide();
+}
+</script>
+
+</body>
+</html>

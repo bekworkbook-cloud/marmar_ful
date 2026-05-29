@@ -6,6 +6,7 @@ from .order import Order
 from .order_item import OrderItem
 from .payment_log import PaymentLog
 from .product import Product
+from .message import Message
 
 __all__ = [
     "Base",
@@ -15,5 +16,6 @@ __all__ = [
     "Order",
     "OrderItem",
     "PaymentLog",
-    "Product"
+    "Product",
+    "Message",
 ]

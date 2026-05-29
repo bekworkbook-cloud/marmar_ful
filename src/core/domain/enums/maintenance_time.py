@@ -1,6 +1,7 @@
+from datetime import time
 from enum import Enum
 
 
 class MaintenanceTime(Enum):
-    DAY_START = "07:00"
-    DAY_END = "17:00"
+    DAY_START = time(7, 0)
+    DAY_END = time(17, 0)

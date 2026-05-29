@@ -2,36 +2,53 @@ import enum
 
 
 class Permission(enum.Enum):
-    ACCESS_OPERATOR_CHAT = "access_operator_chat"
-    ACCESS_ADMIN_CHAT = "access_admin_chat"
-    ACCESS_COURIER_CHAT = "access_courier_chat"
-    ACCESS_CUSTOMER_CHAT = "access_customer_chat"
+    '''Branches'''
+    GET_BRANCHES = 'get_branches'
+    POST_BRANCH = 'post_branch'
+    GET_BRANCH = 'get_branch'
+    UPDATE_BRANCH = 'update_branch'
+    PATCH_BRANCH = 'patch_branch'
+    DELETE_BRANCH = 'delete_branch'
 
-    CREATE_ORDER = "create_order"
-    UPDATE_ORDER = "update_order"
-    DELETE_ORDER = "delete_order"
-    VIEW_ORDER = "view_order"
+    '''Categories'''
+    GET_CATEGORIES = 'get_categories'
+    POST_CATEGORY = 'post_category'
+    GET_CATEGORY = 'get_category'
+    UPDATE_CATEGORY = 'update_category'
+    DELETE_CATEGORY = 'delete_category'
 
-    CREATE_CATEGORY = "create_category"
-    UPDATE_CATEGORY = "update_category"
-    DELETE_CATEGORY = "delete_category"
-    VIEW_CATEGORY = "view_category"
+    '''Products'''
+    GET_PRODUCTS = 'get_products'
+    GET_PRODUCT = 'get_product'
+    POST_PRODUCT = 'post_product'
+    UPDATE_PRODUCT = 'update_product'
+    DELETE_PRODUCT = 'delete_product'
 
-    CREATE_PRODUCT = "create_product"
-    UPDATE_PRODUCT = "update_product"
-    DELETE_PRODUCT = "delete_product"
-    VIEW_PRODUCT = "view_porduct"
+    '''Orders & order items'''
+    GET_ORDERS = 'get_orders'
+    GET_ORDER = 'get_order'
+    POST_ORDER = 'post_order'
+    UPDATE_ORDER = 'update_order'
+    GET_ORDER_ITEMS = 'get_order_itmes'
 
-    VIEW_ADMIN_DASHBOARD = "view_admin_dashboard"
-    VIEW_CUSTOMER_PAGE = "view_customer_page"
+    '''Messages'''
+    GET_MESSAGES = 'get_messages'
+    POST_MESSAGES = 'post_messges'
 
-    ASSIGN_OPERATOR = "assign_operator"
-    ASSIGN_MAIN_OPERATOR = "assign_main_operator"
-    ASSIGN_COURIER = "assign_courier"
+    '''Payment logs'''
+    GET_PAYMENT_LOGS = 'get_payment_logs'
+    POST_PAYMENT_LOGS = 'post_payment_logs'
+    UPDATE_PAYMENT_LOGS = 'update_payment_logs'
 
-    CREATE_USER = "create_user"
-    UPDATE_USER = "update_user"
-    # delete нету потому что он одлжен остаться на базе.
+    '''Users'''
+    GET_USERS = 'get_users'
+    POST_USERS = 'post_users'
+    UPDATE_USERS = 'update_users'
+    DELETE_USERS = 'delete_users'
 
-    VIEW_ALL_ORDERS = "view_all_orders"
-
+    '''Auth'''
+    POST_REGISTER = 'post_register'
+    POST_LOGIN = 'post_login'
+    DELETE_USER = 'delete_user'
+    GET_ME = 'get_me'
+    INIT_DATA = 'init_data'

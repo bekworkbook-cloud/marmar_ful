@@ -6,7 +6,7 @@ from src.config import bots
 
 webhook_router = APIRouter()
 
-@webhook_router.post("/webhook/{bot_id}")
+@webhook_router.post("/webhook/{bot_id}", tags=["webhook"], include_in_schema=False)
 async def webhook(bot_id: str, request: Request):
     logging.info(f"[{bot_id}] Received webhook request")
     

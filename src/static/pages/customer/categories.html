@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="ru" class="h-full">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="
+            width=device-width,
+            initial-scale=1.0,
+            maximum-scale=1.0,
+            user-scalable=no,
+            viewport-fit=cover
+        "
+    >
+
+    <title>Категории</title>
+
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <link
+        href="
+            https://fonts.googleapis.com/css2?
+            family=Outfit:wght@300;400;500;600;700&
+            display=swap
+        "
+        rel="stylesheet"
+    >
+
+    <style>
+        * {
+            font-family: 'Outfit', sans-serif;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+        }
+
+        body {
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-up {
+            animation: fadeUp .4s ease both;
+        }
+    </style>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        surface: '#0f172a',
+                        card: '#1e293b',
+                        accent: '#f59e0b',
+                        accentSoft: '#78350f',
+                        txt: '#e2e8f0',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-surface text-txt">
+
+<div class="
+    min-h-screen
+    flex
+    flex-col
+">
+
+    <!-- HEADER -->
+    <header class="
+        sticky
+        top-0
+        z-10
+
+        bg-surface/95
+        backdrop-blur
+
+        border-b
+        border-slate-800
+
+        px-5
+        pt-[calc(env(safe-area-inset-top)+16px)]
+        pb-4
+    ">
+
+        <div class="
+            flex
+            items-center
+            justify-between
+        ">
+
+            <div>
+
+                <h1 class="
+                    text-3xl
+                    font-bold
+                ">
+                    Категории
+                </h1>
+
+                <div class="
+                    text-sm
+                    text-slate-400
+                    mt-1
+                ">
+                    Выберите категорию
+                </div>
+
+            </div>
+
+            <div class="
+                w-14
+                h-14
+                rounded-2xl
+                bg-accentSoft
+
+                flex
+                items-center
+                justify-center
+            ">
+                <i
+                    data-lucide="layout-grid"
+                    class="w-7 h-7 text-accent"
+                ></i>
+            </div>
+
+        </div>
+
+    </header>
+
+    <!-- CONTENT -->
+    <main class="
+        flex-1
+        overflow-y-auto
+
+        px-5
+        py-5
+        pb-[calc(env(safe-area-inset-bottom)+24px)]
+    ">
+
+        <div
+            id="content"
+            class="
+                text-slate-400
+            "
+        >
+            Загрузка...
+        </div>
+
+    </main>
+
+</div>
+
+<script>
+lucide.createIcons();
+
+Telegram.WebApp.ready();
+Telegram.WebApp.expand();
+
+Telegram.WebApp.BackButton.show();
+
+Telegram.WebApp.BackButton.onClick(() => {
+    history.back();
+});
+
+const API_BASE = "/api/v1";
+
+async function apiFetch(endpoint, options = {}) {
+    const token = localStorage.getItem("jwt");
+
+    const response = await fetch(`${API_BASE}${endpoint}`, {
+        ...options,
+        headers: {
+            "Content-Type": "application/json",
+            ...(options.headers || {}),
+            "Authorization": `Bearer ${token}`
+        }
+    });
+
+    if (response.status === 401) {
+
+        localStorage.removeItem("jwt");
+
+        window.location.href =
+            "/static/pages/customer/loader.html";
+
+        return null;
+    }
+
+    return response;
+}
+
+function getBranchId() {
+    const params = new URLSearchParams(
+        window.location.search
+    );
+
+    return params.get("branch_id");
+}
+
+async function loadCategories() {
+
+    const content =
+        document.getElementById("content");
+
+    try {
+
+        const branchId = getBranchId();
+
+        if (!branchId) {
+
+            content.innerHTML = `
+                <div class="
+                    bg-red-900/30
+                    border
+                    border-red-800
+                    rounded-2xl
+                    p-4
+                    text-red-300
+                ">
+                    branch_id не найден
+                </div>
+            `;
+
+            return;
+        }
+
+        const response = await apiFetch(
+            `/categories/?branch_id=${branchId}`
+        );
+
+        if (!response) {
+            return;
+        }
+
+        const data = await response.json();
+
+        renderCategories(data.categories);
+
+    } catch (error) {
+
+        console.error(error);
+
+        content.innerHTML = `
+            <div class="
+                bg-red-900/30
+                border
+                border-red-800
+                rounded-2xl
+                p-4
+                text-red-300
+            ">
+                Ошибка загрузки категорий
+            </div>
+        `;
+    }
+}
+
+function renderCategories(categories) {
+
+    const content =
+        document.getElementById("content");
+
+    if (!categories.length) {
+
+        content.innerHTML = `
+            <div class="
+                text-slate-400
+            ">
+                Категории не найдены
+            </div>
+        `;
+
+        return;
+    }
+
+    content.innerHTML = `
+        <div
+            id="categories"
+            class="
+                flex
+                flex-col
+                gap-4
+            "
+        ></div>
+    `;
+
+    const container =
+        document.getElementById("categories");
+
+    categories.forEach((category, index) => {
+
+        const div =
+            document.createElement("button");
+
+        div.className = `
+            fade-up
+
+            bg-card
+            rounded-3xl
+
+            p-5
+
+            text-left
+
+            transition
+            active:scale-[0.98]
+        `;
+
+        div.style.animationDelay =
+            `${index * 0.05}s`;
+
+        div.innerHTML = `
+            <div class="
+                flex
+                items-start
+                justify-between
+                gap-4
+            ">
+
+                <div class="flex-1">
+
+                    <div class="
+                        text-xl
+                        font-semibold
+                    ">
+                        ${category.name}
+                    </div>
+
+                    <div class="
+                        text-slate-400
+                        text-sm
+                        mt-2
+                        leading-relaxed
+                    ">
+                        ${category.description || ""}
+                    </div>
+
+                </div>
+
+                <div class="
+                    w-12
+                    h-12
+                    rounded-2xl
+                    bg-slate-800
+
+                    flex
+                    items-center
+                    justify-center
+
+                    shrink-0
+                ">
+                    <i
+                        data-lucide="chevron-right"
+                        class="
+                            w-5
+                            h-5
+                            text-accent
+                        "
+                    ></i>
+                </div>
+
+            </div>
+        `;
+
+        div.onclick = () => {
+            openCategory(category);
+        };
+
+        container.appendChild(div);
+    });
+
+    lucide.createIcons();
+}
+
+function openCategory(category) {
+
+    localStorage.setItem(
+        "category_id",
+        category.id
+    );
+
+    window.location.href =
+        `/static/pages/customer/products.html?category_id=${category.id}`;
+}
+
+loadCategories();
+</script>
+
+</body>
+</html>

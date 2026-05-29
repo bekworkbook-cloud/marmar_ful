@@ -1,0 +1,521 @@
+<!doctype html>
+<html lang="ru" class="h-full">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="
+            width=device-width,
+            initial-scale=1.0,
+            maximum-scale=1.0,
+            user-scalable=no,
+            viewport-fit=cover
+        "
+    >
+
+    <title>Товары</title>
+
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <link
+        href="
+            https://fonts.googleapis.com/css2?
+            family=Outfit:wght@300;400;500;600;700&
+            display=swap
+        "
+        rel="stylesheet"
+    >
+
+    <style>
+        * {
+            font-family: 'Outfit', sans-serif;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+        }
+
+        body {
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-up {
+            animation: fadeUp .4s ease both;
+        }
+    </style>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        surface: '#0f172a',
+                        card: '#1e293b',
+                        accent: '#f59e0b',
+                        accentSoft: '#78350f',
+                        txt: '#e2e8f0',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-surface text-txt">
+
+<div class="
+    min-h-screen
+    flex
+    flex-col
+">
+
+    <!-- HEADER -->
+    <header class="
+        sticky
+        top-0
+        z-10
+
+        bg-surface/95
+        backdrop-blur
+
+        border-b
+        border-slate-800
+
+        px-5
+        pt-[calc(env(safe-area-inset-top)+16px)]
+        pb-4
+    ">
+
+        <div class="
+            flex
+            items-center
+            justify-between
+        ">
+
+            <div>
+
+                <h1 class="
+                    text-3xl
+                    font-bold
+                ">
+                    Товары
+                </h1>
+
+                <div class="
+                    text-sm
+                    text-slate-400
+                    mt-1
+                ">
+                    Выберите блюда
+                </div>
+
+            </div>
+
+            <div class="
+                w-14
+                h-14
+                rounded-2xl
+                bg-accentSoft
+
+                flex
+                items-center
+                justify-center
+            ">
+                <i
+                    data-lucide="shopping-bag"
+                    class="w-7 h-7 text-accent"
+                ></i>
+            </div>
+
+        </div>
+
+    </header>
+
+    <!-- CONTENT -->
+    <main class="
+        flex-1
+        overflow-y-auto
+
+        px-5
+        py-5
+        pb-[calc(env(safe-area-inset-bottom)+100px)]
+    ">
+
+        <div
+            id="content"
+            class="text-slate-400"
+        >
+            Загрузка...
+        </div>
+
+    </main>
+
+</div>
+
+<script>
+lucide.createIcons();
+
+Telegram.WebApp.ready();
+Telegram.WebApp.expand();
+
+Telegram.WebApp.BackButton.show();
+
+Telegram.WebApp.BackButton.onClick(() => {
+    history.back();
+});
+
+const API_BASE = "/api/v1";
+
+async function apiFetch(endpoint, options = {}) {
+
+    const token =
+        localStorage.getItem("jwt");
+
+    const response = await fetch(
+        `${API_BASE}${endpoint}`,
+        {
+            ...options,
+            headers: {
+                "Content-Type": "application/json",
+                ...(options.headers || {}),
+                "Authorization": `Bearer ${token}`
+            }
+        }
+    );
+
+    if (response.status === 401) {
+
+        localStorage.removeItem("jwt");
+
+        window.location.href =
+            "/static/pages/customer/loader.html";
+
+        return null;
+    }
+
+    return response;
+}
+
+function getCategoryId() {
+
+    const params =
+        new URLSearchParams(
+            window.location.search
+        );
+
+    return params.get("category_id");
+}
+
+async function loadProducts() {
+
+    const content =
+        document.getElementById("content");
+
+    try {
+
+        const categoryId =
+            getCategoryId();
+
+        if (!categoryId) {
+
+            content.innerHTML = `
+                <div class="
+                    bg-red-900/30
+                    border
+                    border-red-800
+                    rounded-2xl
+                    p-4
+                    text-red-300
+                ">
+                    category_id не найден
+                </div>
+            `;
+
+            return;
+        }
+
+        const response = await apiFetch(
+            `/products/?category_id=${categoryId}`
+        );
+
+        if (!response) {
+            return;
+        }
+
+        const data =
+            await response.json();
+
+        renderProducts(data.products);
+
+    } catch (error) {
+
+        console.error(error);
+
+        content.innerHTML = `
+            <div class="
+                bg-red-900/30
+                border
+                border-red-800
+                rounded-2xl
+                p-4
+                text-red-300
+            ">
+                Ошибка загрузки товаров
+            </div>
+        `;
+    }
+}
+
+function renderProducts(products) {
+
+    const content =
+        document.getElementById("content");
+
+    if (!products.length) {
+
+        content.innerHTML = `
+            <div class="
+                text-slate-400
+            ">
+                Товары не найдены
+            </div>
+        `;
+
+        return;
+    }
+
+    content.innerHTML = `
+        <div
+            id="products"
+            class="
+                flex
+                flex-col
+                gap-5
+            "
+        ></div>
+    `;
+
+    const container =
+        document.getElementById("products");
+
+    products.forEach((product, index) => {
+
+        const div =
+            document.createElement("div");
+
+        div.className = `
+            fade-up
+
+            bg-card
+            rounded-3xl
+
+            overflow-hidden
+
+            border
+            border-slate-800
+        `;
+
+        div.style.animationDelay =
+            `${index * 0.05}s`;
+
+        div.innerHTML = `
+            <div class="
+                relative
+                w-full
+                h-56
+                bg-slate-800
+            ">
+
+                <img
+                    class="
+                        w-full
+                        h-full
+                        object-cover
+                    "
+                    src="
+                        ${product.image_url ||
+                        product.img ||
+                        ""}
+                    "
+                    alt="${product.name}"
+                >
+
+            </div>
+
+            <div class="p-5">
+
+                <div class="
+                    text-xl
+                    font-semibold
+                ">
+                    ${product.name}
+                </div>
+
+                <div class="
+                    text-sm
+                    text-slate-400
+                    leading-relaxed
+                    mt-2
+                ">
+                    ${product.description || ""}
+                </div>
+
+                <div class="
+                    flex
+                    items-center
+                    justify-between
+                    gap-4
+                    mt-5
+                ">
+
+                    <div class="
+                        text-2xl
+                        font-bold
+                        text-accent
+                    ">
+                        ${formatPrice(product.price)}
+                    </div>
+
+                    <button
+                        class="
+                            add-button
+
+                            px-5
+                            py-3
+
+                            rounded-2xl
+
+                            bg-accent
+                            text-slate-950
+
+                            font-semibold
+
+                            transition
+                            active:scale-95
+                        "
+                    >
+                        В корзину
+                    </button>
+
+                </div>
+
+            </div>
+        `;
+
+        const button =
+            div.querySelector(".add-button");
+
+        button.onclick = () => {
+            addToCart(product, button);
+        };
+
+        container.appendChild(div);
+    });
+}
+
+function formatPrice(price) {
+    return `
+        ${Number(price).toLocaleString()}
+        сум
+    `;
+}
+
+function addToCart(product, button) {
+
+    let cart =
+        JSON.parse(
+            localStorage.getItem("cart")
+        ) || [];
+
+    const existingProduct =
+        cart.find(
+            item => item.id === product.id
+        );
+
+    if (existingProduct) {
+
+        existingProduct.quantity += 1;
+
+    } else {
+
+        cart.push({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            image_url: product.image_url,
+            quantity: 1,
+            branch_id: product.branch_id
+        });
+    }
+
+    localStorage.setItem(
+        "cart",
+        JSON.stringify(cart)
+    );
+
+    button.innerText = "Добавлено";
+
+    button.classList.remove(
+        "bg-accent",
+        "text-slate-950"
+    );
+
+    button.classList.add(
+        "bg-green-500",
+        "text-white"
+    );
+
+    setTimeout(() => {
+
+        button.innerText =
+            "В корзину";
+
+        button.classList.remove(
+            "bg-green-500",
+            "text-white"
+        );
+
+        button.classList.add(
+            "bg-accent",
+            "text-slate-950"
+        );
+
+    }, 1200);
+}
+
+loadProducts();
+</script>
+
+</body>
+</html>

@@ -8,5 +8,5 @@ class InlineKb:
     @staticmethod
     def get_mini_app_kb():
         builder = InlineKeyboardBuilder()
-        builder.button(text="Открыть веб страницу", web_app=WebAppInfo(url=f"{settings.get_webapp_url()}/courier_bot")) 
+        builder.button(text="Открыть веб страницу", web_app=WebAppInfo(url=f"{settings.get_webapp_url()}/in/courier_bot")) 
         return builder.as_markup()

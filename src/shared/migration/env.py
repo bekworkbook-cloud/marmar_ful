@@ -17,7 +17,8 @@ from src.infrastructure.database.models.category import Category
 from src.infrastructure.database.models.product import Product
 from src.infrastructure.database.models.order import Order 
 from src.infrastructure.database.models.order_item import OrderItem 
-from src.infrastructure.database.models.payment_log import PaymentLog 
+from src.infrastructure.database.models.payment_log import PaymentLog
+from src.infrastructure.database.models.message import Message
 
 
 config = context.config

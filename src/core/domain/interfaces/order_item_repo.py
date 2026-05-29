@@ -9,7 +9,11 @@ class OrderItemRepository(ABC):
         pass
 
     @abstractmethod
-    async def get(self, order_item_id: int) -> OrderItem:
+    async def get_by_id(self, order_item_id: int) -> OrderItem:
+        pass
+
+    @abstractmethod
+    async def get_by_order_id(self, order_id: int, limit: int = 10, offset: int = 0) -> list[OrderItem]:
         pass
 
     @abstractmethod
@@ -21,5 +25,5 @@ class OrderItemRepository(ABC):
         pass
 
     @abstractmethod
-    async def list(self, limit: int = 10, offset: int = 0, **filters) -> list[OrderItem]:
+    async def get_list(self, limit: int = 10, offset: int = 0, **filters) -> list[OrderItem]:
         pass

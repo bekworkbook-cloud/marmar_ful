@@ -1,0 +1,86 @@
+/* css/style.css */
+body {
+    font-family: sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+}
+
+.view {
+    display: none;
+    padding: 20px;
+    padding-bottom: 80px;
+}
+
+.view.active {
+    display: block;
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-around;
+    background: #fff;
+    padding: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.card {
+    background: #fff;
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+}
+
+#categories-nav {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+#categories-nav button {
+    margin-right: 10px;
+    white-space: nowrap;
+}
+
+#cart-widget {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
+    background: #007bff;
+    color: white;
+    text-align: center;
+    padding: 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.checkout-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.checkout-form input, .checkout-form button {
+    padding: 10px;
+    font-size: 16px;
+}
+
+.branch-card {
+    cursor: pointer; /* Меняет курсор на указатель при наведении */
+    transition: background-color 0.2s ease;
+}
+
+/* Визуальный отклик при касании/нажатии */
+.branch-card:active, .branch-card:hover {
+    background-color: #e2e6ea;
+}

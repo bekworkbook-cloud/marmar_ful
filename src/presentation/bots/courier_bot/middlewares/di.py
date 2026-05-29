@@ -3,7 +3,7 @@ from aiogram.types import TelegramObject
 from typing import Callable, Dict, Any, Awaitable
 from src.infrastructure.database.dao.user_dao import UserDAO
 from src.infrastructure.database.repositories.user_repo_impl import UserRepositoryImpl
-from src.core.application.use_cases.verify_courier_access import VerifyCourierAccessUseCase
+from src.core.application.use_cases.verify_courier_access_use_case import VerifyCourierAccessUseCase
 
 class DIMiddleware(BaseMiddleware):
     def __init__(self, session_maker):

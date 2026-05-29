@@ -1,0 +1,611 @@
+<!doctype html>
+<html lang="ru" class="h-full">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="
+            width=device-width,
+            initial-scale=1.0,
+            maximum-scale=1.0,
+            user-scalable=no,
+            viewport-fit=cover
+        "
+    >
+
+    <title>Корзина</title>
+
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <link
+        href="
+            https://fonts.googleapis.com/css2?
+            family=Outfit:wght@300;400;500;600;700&
+            display=swap
+        "
+        rel="stylesheet"
+    >
+
+    <style>
+        * {
+            font-family: 'Outfit', sans-serif;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+        }
+
+        body {
+            overflow-x: hidden;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-up {
+            animation: fadeUp .4s ease both;
+        }
+    </style>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        surface: '#0f172a',
+                        card: '#1e293b',
+                        accent: '#f59e0b',
+                        accentSoft: '#78350f',
+                        txt: '#e2e8f0',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-surface text-txt">
+
+<div class="
+    min-h-screen
+    flex
+    flex-col
+">
+
+    <!-- HEADER -->
+    <header class="
+        sticky
+        top-0
+        z-10
+
+        bg-surface/95
+        backdrop-blur
+
+        border-b
+        border-slate-800
+
+        px-5
+        pt-[calc(env(safe-area-inset-top)+16px)]
+        pb-4
+    ">
+
+        <div class="
+            flex
+            items-center
+            justify-between
+        ">
+
+            <div>
+
+                <h1 class="
+                    text-3xl
+                    font-bold
+                ">
+                    Корзина
+                </h1>
+
+                <div class="
+                    text-sm
+                    text-slate-400
+                    mt-1
+                ">
+                    Ваш заказ
+                </div>
+
+            </div>
+
+            <div class="
+                w-14
+                h-14
+                rounded-2xl
+                bg-accentSoft
+
+                flex
+                items-center
+                justify-center
+            ">
+                <i
+                    data-lucide="shopping-cart"
+                    class="w-7 h-7 text-accent"
+                ></i>
+            </div>
+
+        </div>
+
+    </header>
+
+    <!-- CONTENT -->
+    <main class="
+        flex-1
+        overflow-y-auto
+
+        px-5
+        py-5
+        pb-[calc(env(safe-area-inset-bottom)+120px)]
+    ">
+
+        <div id="content"></div>
+
+    </main>
+
+</div>
+
+<script>
+lucide.createIcons();
+
+Telegram.WebApp.ready();
+Telegram.WebApp.expand();
+
+Telegram.WebApp.BackButton.show();
+
+Telegram.WebApp.BackButton.onClick(() => {
+    history.back();
+});
+
+function getCart() {
+
+    return JSON.parse(
+        localStorage.getItem("cart")
+    ) || [];
+}
+
+function saveCart(cart) {
+
+    localStorage.setItem(
+        "cart",
+        JSON.stringify(cart)
+    );
+}
+
+function formatPrice(price) {
+
+    return `
+        ${Number(price).toLocaleString()}
+        сум
+    `;
+}
+
+function renderCart() {
+
+    const content =
+        document.getElementById("content");
+
+    const cart = getCart();
+
+    if (!cart.length) {
+
+        content.innerHTML = `
+            <div class="
+                flex
+                flex-col
+                items-center
+                justify-center
+
+                text-center
+
+                py-20
+            ">
+
+                <div class="
+                    w-24
+                    h-24
+
+                    rounded-3xl
+                    bg-card
+
+                    flex
+                    items-center
+                    justify-center
+                ">
+                    <i
+                        data-lucide="shopping-cart"
+                        class="
+                            w-10
+                            h-10
+                            text-slate-500
+                        "
+                    ></i>
+                </div>
+
+                <div class="
+                    mt-6
+                    text-2xl
+                    font-semibold
+                ">
+                    Корзина пуста
+                </div>
+
+                <div class="
+                    mt-2
+                    text-slate-400
+                ">
+                    Добавьте товары в корзину
+                </div>
+
+            </div>
+        `;
+
+        lucide.createIcons();
+
+        return;
+    }
+
+    let total = 0;
+
+    const itemsHtml = cart.map((item, index) => {
+
+        const itemTotal =
+            Number(item.price) * item.quantity;
+
+        total += itemTotal;
+
+        return `
+            <div class="
+                fade-up
+
+                bg-card
+                rounded-3xl
+
+                p-4
+
+                border
+                border-slate-800
+            "
+            style="
+                animation-delay:
+                ${index * 0.05}s
+            "
+            >
+
+                <div class="
+                    flex
+                    gap-4
+                ">
+
+                    <img
+                        class="
+                            w-28
+                            h-28
+
+                            rounded-2xl
+
+                            object-cover
+
+                            bg-slate-800
+                            shrink-0
+                        "
+                        src="${item.image_url || ''}"
+                        alt="${item.name}"
+                    >
+
+                    <div class="
+                        flex-1
+
+                        flex
+                        flex-col
+                        justify-between
+                    ">
+
+                        <div>
+
+                            <div class="
+                                text-lg
+                                font-semibold
+                            ">
+                                ${item.name}
+                            </div>
+
+                            <div class="
+                                text-accent
+                                font-bold
+                                text-lg
+                                mt-2
+                            ">
+                                ${formatPrice(item.price)}
+                            </div>
+
+                        </div>
+
+                        <div>
+
+                            <div class="
+                                flex
+                                items-center
+                                gap-3
+                                mt-4
+                            ">
+
+                                <button
+                                    class="
+                                        w-10
+                                        h-10
+
+                                        rounded-xl
+
+                                        bg-slate-800
+
+                                        flex
+                                        items-center
+                                        justify-center
+
+                                        active:scale-95
+                                    "
+                                    onclick="
+                                        decreaseQuantity(${item.id})
+                                    "
+                                >
+                                    -
+                                </button>
+
+                                <div class="
+                                    min-w-[32px]
+                                    text-center
+                                    font-semibold
+                                ">
+                                    ${item.quantity}
+                                </div>
+
+                                <button
+                                    class="
+                                        w-10
+                                        h-10
+
+                                        rounded-xl
+
+                                        bg-slate-800
+
+                                        flex
+                                        items-center
+                                        justify-center
+
+                                        active:scale-95
+                                    "
+                                    onclick="
+                                        increaseQuantity(${item.id})
+                                    "
+                                >
+                                    +
+                                </button>
+
+                            </div>
+
+                            <button
+                                class="
+                                    mt-4
+
+                                    text-sm
+                                    text-red-400
+                                "
+                                onclick="
+                                    removeItem(${item.id})
+                                "
+                            >
+                                Удалить
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+        `;
+    }).join("");
+
+    content.innerHTML = `
+        <div class="
+            flex
+            flex-col
+            gap-4
+        ">
+            ${itemsHtml}
+        </div>
+
+        <div class="
+            mt-6
+
+            bg-card
+            rounded-3xl
+
+            p-5
+
+            border
+            border-slate-800
+        ">
+
+            <div class="
+                flex
+                items-center
+                justify-between
+            ">
+                <div class="
+                    text-slate-400
+                ">
+                    Товаров
+                </div>
+
+                <div class="
+                    font-semibold
+                ">
+                    ${cart.length}
+                </div>
+            </div>
+
+            <div class="
+                flex
+                items-center
+                justify-between
+
+                mt-4
+            ">
+
+                <div class="
+                    text-xl
+                    font-semibold
+                ">
+                    Итого
+                </div>
+
+                <div class="
+                    text-2xl
+                    font-bold
+                    text-accent
+                ">
+                    ${formatPrice(total)}
+                </div>
+
+            </div>
+
+            <button
+                class="
+                    w-full
+
+                    mt-6
+                    py-4
+
+                    rounded-2xl
+
+                    bg-accent
+                    text-slate-950
+
+                    font-bold
+                    text-lg
+
+                    active:scale-[0.98]
+                    transition
+                "
+                onclick="checkout()"
+            >
+                Оформить заказ
+            </button>
+
+        </div>
+    `;
+
+    lucide.createIcons();
+}
+
+function increaseQuantity(productId) {
+
+    const cart = getCart();
+
+    const item = cart.find(
+        item => item.id === productId
+    );
+
+    if (!item) {
+        return;
+    }
+
+    item.quantity += 1;
+
+    saveCart(cart);
+
+    renderCart();
+}
+
+function decreaseQuantity(productId) {
+
+    const cart = getCart();
+
+    const item = cart.find(
+        item => item.id === productId
+    );
+
+    if (!item) {
+        return;
+    }
+
+    item.quantity -= 1;
+
+    if (item.quantity <= 0) {
+
+        const filteredCart =
+            cart.filter(
+                item => item.id !== productId
+            );
+
+        saveCart(filteredCart);
+
+    } else {
+
+        saveCart(cart);
+    }
+
+    renderCart();
+}
+
+function removeItem(productId) {
+
+    const cart = getCart();
+
+    const filteredCart =
+        cart.filter(
+            item => item.id !== productId
+        );
+
+    saveCart(filteredCart);
+
+    renderCart();
+}
+
+function checkout() {
+
+    window.location.href =
+        "/static/pages/customer/order.html";
+}
+
+renderCart();
+</script>
+
+</body>
+</html>

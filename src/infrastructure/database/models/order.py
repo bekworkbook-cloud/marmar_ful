@@ -31,7 +31,7 @@ class Order(Base):
     branch_id: Mapped[Optional[int]] = mapped_column(ForeignKey("branches.id"))
     
     status: Mapped[str] = mapped_column(String(20), default=OrderStatus.PENDING.value)
-    pay_method: Mapped[str] = mapped_column(String(20))
+    payment_method: Mapped[str] = mapped_column(String(20))
     total_price: Mapped[Decimal] = mapped_column(Numeric(10, 2))
     is_accepted: Mapped[bool] = mapped_column(Boolean, default=False)
     
@@ -55,4 +55,4 @@ class Order(Base):
     items: Mapped[List["OrderItem"]] = relationship(back_populates="order")
     branch: Mapped[Optional["Branch"]] = relationship(back_populates="orders")
     payment_logs: Mapped[List["PaymentLog"]] = relationship(back_populates="order")
-
+    messages: Mapped[List["Message"]] = relationship(back_populates="order")

@@ -7,8 +7,6 @@ test.py
 db.sqlite3
 .vscode
 
-
-вопросы*
-логика*
-db_schema.txt
-tasks.txt
+TODO.md
+script.sqlite3
+endpoints.md
