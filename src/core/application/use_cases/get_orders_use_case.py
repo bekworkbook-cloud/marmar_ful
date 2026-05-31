@@ -74,4 +74,4 @@ class GetOrdersUseCase:
             for order in order_entities
         ]
         print(orders_dtos_list)
-        return OrdersDTO(orders=orders_dtos_list)
+        return OrdersDTO(items=orders_dtos_list)

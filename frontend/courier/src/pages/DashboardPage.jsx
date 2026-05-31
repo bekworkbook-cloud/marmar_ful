@@ -1,93 +1,154 @@
-// src/pages/DashboardPage.jsx
-import React, { useState, useEffect } from 'react';
-import { apiClient } from '../api/client';
-import { useAuthStore } from '../store/auth';
-import CourierOrderCard from '../components/CourierOrderCard';
+import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { orderApi } from '../api/api'
+import useStore from '../store/useStore'
 
-export default function DashboardPage({ onOrderSelect }) {
-  const myCourierId = useAuthStore((s) => s.courierId);
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('mine'); // 'mine' | 'available'
+const STATUS_STYLE = {
+  ACCEPTED:    { badge: 'bg-blue-100 text-blue-700',    label: 'Принят' },
+  IN_DELIVERY: { badge: 'bg-violet-100 text-violet-700',label: 'Доставляется' },
+  PENDING:     { badge: 'bg-amber-100 text-amber-700',  label: 'Ожидается' },
+  DELIVERED:   { badge: 'bg-green-100 text-green-700',  label: 'Доставлен' },
+  CANCELLED:   { badge: 'bg-red-100 text-red-700',      label: 'Отменён' },
+}
 
-  const fetchOrders = async () => {
-    setLoading(true);
-    try {
-      const data = await apiClient('/orders/?limit=50&offset=0');
-      const list = Array.isArray(data) ? data : (data.orders || []);
-      setOrders(list);
-    } catch (error) {
-      alert('Ошибка при загрузке заказов: ' + error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+export default function DashboardPage() {
+  const navigate = useNavigate()
+  const user = useStore(s => s.user)
+  const [orders, setOrders] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState('active')
+
+  const load = useCallback(() => {
+    setLoading(true)
+    orderApi
+      .list()
+      .then(r => {
+        const data = r.data
+        setOrders(Array.isArray(data) ? data : data?.items || [])
+      })
+      .finally(() => setLoading(false))
+  }, [])
 
   useEffect(() => {
-    fetchOrders();
-  }, []);
+    load()
+    const interval = setInterval(load, 30000)
+    return () => clearInterval(interval)
+  }, [load])
 
-  // String() с обеих сторон — courier_id число, myCourierId строка из JWT sub
-  const myActiveOrders = orders.filter(
-    (o) => String(o.courier_id) === String(myCourierId) && o.status === 'delivering'
-  );
+  const activeOrders = orders.filter(o =>
+    ['ACCEPTED', 'IN_DELIVERY'].includes(o.status)
+  )
+  const historyOrders = orders.filter(o =>
+    ['DELIVERED', 'CANCELLED'].includes(o.status)
+  )
 
-  const availableOrders = orders.filter(
-    (o) => o.courier_id === null && ['accepted', 'pending'].includes(o.status)
-  );
-
-  const displayedOrders = activeTab === 'mine' ? myActiveOrders : availableOrders;
+  const displayed = activeTab === 'active' ? activeOrders : historyOrders
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-900 px-4 pt-4 pb-[env(safe-area-inset-bottom,16px)]">
-      {/* Шапка и кнопка синхронизации */}
-      <div className="flex justify-between items-center mb-4 pt-[env(safe-area-inset-top,16px)]">
-        <h1 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">Панель Курьера</h1>
-        <button
-          onClick={fetchOrders}
-          disabled={loading}
-          className="p-2 bg-white dark:bg-slate-850 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 active:opacity-50 disabled:opacity-40"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
-          </svg>
-        </button>
-      </div>
-
-      {/* Переключатель табов */}
-      <div className="grid grid-cols-2 p-1 bg-slate-200 dark:bg-slate-800 rounded-xl mb-4 text-sm font-medium">
-        <button
-          onClick={() => setActiveTab('mine')}
-          className={`py-2 text-center rounded-lg transition-all ${activeTab === 'mine' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}
-        >
-          Мои в пути ({myActiveOrders.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('available')}
-          className={`py-2 text-center rounded-lg transition-all ${activeTab === 'available' ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}
-        >
-          Свободные ({availableOrders.length})
-        </button>
-      </div>
-
-      {/* Списки заказов */}
-      {loading ? (
-        <div className="flex-1 flex items-center justify-center text-slate-400 text-sm">Загрузка данных...</div>
-      ) : displayedOrders.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-slate-400 text-sm border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-2xl p-8">
-          <span>Нет доступных заказов в этой категории</span>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-green-600 px-4 pt-12 pb-5">
+        <div className="flex items-center justify-between mb-1">
+          <div>
+            <p className="text-green-200 text-xs">Панель курьера</p>
+            <h1 className="text-white text-xl font-bold">
+              {user?.first_name || user?.username || 'Курьер'}
+            </h1>
+          </div>
+          <button
+            onClick={load}
+            className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center text-white text-lg"
+          >
+            ↻
+          </button>
         </div>
-      ) : (
-        <div className="space-y-3 flex-1 overflow-y-auto">
-          {displayedOrders.map((order) => (
-            <CourierOrderCard
-              key={order.id}
-              order={order}
-              onClick={() => onOrderSelect(order.id)}
-            />
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 gap-3 mt-4">
+          <div className="bg-green-500/60 rounded-xl p-3 text-center">
+            <p className="text-2xl font-bold text-white">{activeOrders.length}</p>
+            <p className="text-green-200 text-xs mt-0.5">Активные заказы</p>
+          </div>
+          <div className="bg-green-500/60 rounded-xl p-3 text-center">
+            <p className="text-2xl font-bold text-white">{historyOrders.filter(o => o.status === 'DELIVERED').length}</p>
+            <p className="text-green-200 text-xs mt-0.5">Доставлено (сегодня)</p>
+          </div>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex gap-1 bg-green-500/40 rounded-xl p-1 mt-3">
+          {[
+            { key: 'active',  label: `Активные (${activeOrders.length})` },
+            { key: 'history', label: `История (${historyOrders.length})` },
+          ].map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-colors
+                ${activeTab === tab.key ? 'bg-white text-green-700' : 'text-green-100'}`}
+            >
+              {tab.label}
+            </button>
           ))}
         </div>
-      )}
+      </div>
+
+      {/* Orders */}
+      <div className="px-4 py-4 space-y-3">
+        {loading && (
+          <div className="flex justify-center py-12">
+            <div className="w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full animate-spin" />
+          </div>
+        )}
+
+        {!loading && displayed.length === 0 && (
+          <div className="flex flex-col items-center py-12 gap-2">
+            <span className="text-5xl">{activeTab === 'active' ? '🏍️' : '📦'}</span>
+            <p className="text-gray-500 text-sm">
+              {activeTab === 'active' ? 'Нет активных заказов' : 'История пуста'}
+            </p>
+          </div>
+        )}
+
+        {displayed.map(order => {
+          const st = STATUS_STYLE[order.status] || STATUS_STYLE.PENDING
+          return (
+            <button
+              key={order.id}
+              onClick={() => navigate(`/delivery/${order.id}`)}
+              className="w-full text-left bg-white rounded-2xl p-4 shadow-sm border border-gray-100 active:scale-[0.98] transition-transform"
+            >
+              <div className="flex items-start justify-between mb-2">
+                <span className="font-bold text-gray-800">#{order.id}</span>
+                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${st.badge}`}>
+                  {st.label}
+                </span>
+              </div>
+
+              {order.address && (
+                <p className="text-sm text-gray-600 flex items-start gap-1.5 mb-2">
+                  <span>📍</span>
+                  <span>{order.address}</span>
+                </p>
+              )}
+
+              {order.landmark && (
+                <p className="text-xs text-gray-400 flex items-start gap-1.5 mb-2">
+                  <span>🏁</span>
+                  <span>{order.landmark}</span>
+                </p>
+              )}
+
+              <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                <span className="text-xs text-gray-400 capitalize">{order.payment_method}</span>
+                <span className="font-bold text-green-600">
+                  {Number(order.total_price).toLocaleString()} сум
+                </span>
+              </div>
+            </button>
+          )
+        })}
+      </div>
     </div>
-  );
+  )
 }

@@ -8,5 +8,8 @@ export default defineConfig({
   build: {
     outDir: '../../static/courier',
     emptyOutDir: true 
-  }
+  },
+  // css: {
+  //   transformer: 'postcss', // ← явно указываем postcss вместо lightningcss
+  // }
 })

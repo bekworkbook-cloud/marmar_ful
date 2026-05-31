@@ -20,7 +20,7 @@ class ProductDTO(BaseModel):
     maintenance_night: float | None
 
 class ProductsDTO(BaseModel):
-    products: list[ProductDTO]
+    items: list[ProductDTO]
 
 
 

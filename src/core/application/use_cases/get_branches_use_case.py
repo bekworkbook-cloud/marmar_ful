@@ -22,5 +22,5 @@ class GetBranchesUseCase:
             )
             for branch in branches_entities
         ]
-        return BranchesDTO(branches=branches_dtos_list)
+        return BranchesDTO(items=branches_dtos_list)
     

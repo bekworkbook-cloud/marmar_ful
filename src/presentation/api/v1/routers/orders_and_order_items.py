@@ -172,20 +172,20 @@ async def get_order_items(
     return await use_case.execute(get_order_items_input_dto)
 
 @router.patch(
-        "/{order_id}/courier", 
+        "/{id}/courier", 
         dependencies=[Depends(PermissionChecker(Permission.UPDATE_ORDER))],
         response_model=OrderDTO,
 )
 async def patch_order_courier(
-    order_id: int,
-    order_personnel_dto: int,
+    id: int,
+    courier_id: int,
     token_data: TokenDataDTO = Depends(get_token_data),
     use_case: PatchOrderCourierUseCase = Depends(patch_order_courier_use_case_di)
 ):
     
     order_courier_update_dto = OrderCourierUpdateDTO(
-        courier_id=order_personnel_dto,
-        order_id=order_id,
+        courier_id=courier_id,
+        order_id=id,
     )
 
     return await use_case.execute(order_courier_update_dto)

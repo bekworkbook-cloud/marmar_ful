@@ -1,30 +1,12 @@
-// tailwind.config.js
+/** @type {import('tailwindcss').Config} */
 export default {
-  content: ['./src/**/*.{js,jsx}'],
+  content: ['./index.html', './src/**/*.{js,jsx}'],
   theme: {
     extend: {
       colors: {
-        // Базовые цвета на основе скриншота
-        surface: '#090c13', // Самый глубокий тёмный фон
-        card: '#141926',    // Более тёмный сине-грифельный для карточек
-        
-        // Золотой акцентный цвет (Mar Mar, Кнопки, Цена)
-        accent: '#f59e0b',  
-        
-        // Текстовые цвета
-        txt: '#f8fafc',     // Основной светлый текст
-        txtDim: '#94a3b8',  // Тусклый текст (описания, приветствие)
-        
-        // Специальные цвета из панели
-        brand: '#f59e0b',   // Золотой для бренда Mar Mar
-        alert: '#f87171',   // Оранжевый для ID заказов
-        grow: '#4fd1c5',    // Бирюзовый для процентов роста
+        primary: { DEFAULT: '#f97316', dark: '#ea580c', light: '#fff7ed' },
       },
-      fontFamily: {
-        // Убедимся, что Tailwind знает, что использовать в качестве базового шрифта
-        sans: ['Outfit', 'sans-serif'],
-      },
-    }
+    },
   },
   plugins: [],
 }

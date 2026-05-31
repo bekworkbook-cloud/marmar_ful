@@ -59,7 +59,7 @@ class GetOrderInputDTO(BaseModel):
 
 
 class OrdersDTO(BaseModel):    
-    orders: list[OrderDTO]
+    items: list[OrderDTO]
 
 
 class OrderUpdateDTO(BaseModel):

@@ -21,4 +21,4 @@ class GetCategoriesByBranchIdUseCase:
             )
             for category in categories_entities
         ]
-        return CategoriesDTO(categories=categories_dtos_list)
+        return CategoriesDTO(items=categories_dtos_list)

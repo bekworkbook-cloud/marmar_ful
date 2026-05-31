@@ -17,7 +17,7 @@ class CategoryCreateDTO(BaseModel):
     is_active: bool = True
 
 class CategoriesDTO(BaseModel):    
-    categories: list[CategoryDTO]
+    items: list[CategoryDTO]
 
 class CategoryIdDTO(BaseModel):
     id: int

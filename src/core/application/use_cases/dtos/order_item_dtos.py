@@ -15,7 +15,7 @@ class OrderItemCreateDTO(BaseModel):
     price_at_purchase: float
 
 class OrderItemsDTO(BaseModel):    
-    order_items: list[OrderItemDTO]
+    items: list[OrderItemDTO]
 
 
 

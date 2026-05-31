@@ -28,5 +28,5 @@ class GetOrderItemsUseCase:
             for order_item in order_item_entities
         ]
 
-        return OrderItemsDTO(order_items=order_items_dtos_list)
+        return OrderItemsDTO(items=order_items_dtos_list)
     

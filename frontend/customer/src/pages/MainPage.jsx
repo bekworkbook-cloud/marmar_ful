@@ -1,130 +1,130 @@
-import React, { useState, useEffect } from 'react';
-import { Store, AlertTriangle, ClipboardList, ChevronRight, Loader2 } from 'lucide-react';
-import { apiClient } from '../api/client';
-import BranchCard from '../components/BranchCard';
-import { useCartStore } from '../store/cart';
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import useStore from '../store/useStore'
+import { branchApi } from '../api/api'
 
-export default function MainPage({ onAuthError, onBranchSelect, onOrdersSelect }) {
-  const [branches, setBranches] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  
-  const setCheckoutData = useCartStore(state => state.setCheckoutData);
+export default function MainPage() {
+  const navigate = useNavigate()
+  const { selectedBranch, setSelectedBranch , token} = useStore()
+  const [branches, setBranches] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
-    const fetchBranches = async () => {
-      try {
-        const data = await apiClient('/branches/');
-        setBranches(data.branches || []);
-      } catch (err) {
-        if (err.message === "unauthorized") {
-          onAuthError();
-        } else {
-          setError(err.message);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
+    // Проверяем токен: берем либо из стора (если он обновился), либо из localStorage
+    const activeToken = token || localStorage.getItem("access_token")
 
-    fetchBranches();
-  }, [onAuthError]);
+    if (!activeToken) {
+      // Если токена нет, просто ждем. Не ставим setLoading(false),
+      // иначе покажется пустой экран "Пока нет активных филиалов".
+      return
+    }
 
-  const handleBranchClick = (branch) => {
-    window.Telegram?.WebApp?.HapticFeedback.notificationOccurred('success');
-    localStorage.setItem("selected_branch", JSON.stringify(branch));
-    localStorage.setItem("currentBranchId", branch.id);
-    setCheckoutData({ branch_id: branch.id }); 
-    onBranchSelect();
-  };  
+    // Как только токен появился, начинаем загрузку
+    setLoading(true)
+    setError(null)
+
+    branchApi
+      .list()
+      .then(r => {
+        const data = r.data
+        setBranches(Array.isArray(data) ? data : data?.items || [])
+      })
+      .catch((err) => {
+        console.error("Ошибка API:", err)
+        setError('Ошибка при загрузке филиалов')
+      })
+      .finally(() => setLoading(false))
+
+  }, [token])
+
+  const handleSelect = (branch) => {
+    setSelectedBranch(branch)
+    navigate('/menu')
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-orange-50">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+          <p className="text-gray-500 text-sm">Загрузка...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen gap-4 px-6">
+        <div className="text-5xl">😕</div>
+        <p className="text-gray-600 text-center">{error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="px-6 py-3 bg-orange-500 text-white rounded-2xl font-medium"
+        >
+          Повторить
+        </button>
+      </div>
+    )
+  }
+
+  const activeBranches = branches.filter(b => b.is_active !== false)
 
   return (
-    // Глубокий тёмный фон всего приложения
-    <div className="min-h-screen flex flex-col bg-surface text-txt selection:bg-accent/20"> 
-        
-        {/* Хедер в стиле панели администратора */}
-        <header className="sticky top-0 z-20 bg-surface border-b border-slate-800 px-5 pt-[calc(env(safe-area-inset-top)+16px)] pb-4 flex flex-col gap-1 shadow-sm">
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <h1 className="text-3xl font-extrabold tracking-tight text-txt">Филиалы</h1>
-              <div className="text-sm text-txtDim font-medium mt-1">Выберите точку получения заказа</div>
-            </div>
-            {/* Акцентная золотая кнопка/иконка */}
-            <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center shrink-0 shadow-lg shadow-accent/10">
-              <Store className="w-6 h-6 text-surface stroke-[2.5]" />
-            </div>
-          </div>
-        </header>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-gradient-to-b from-orange-500 to-orange-600 px-5 pt-14 pb-10 rounded-b-[2rem]">
+        <p className="text-orange-200 text-sm font-medium mb-1">Добро пожаловать!</p>
+        <h1 className="text-white text-3xl font-bold">Marmar</h1>
+        <p className="text-orange-100 mt-2 text-sm">Выберите ближайший филиал</p>
+      </div>
 
-        {/* Основной контент */}
-        <main className="flex-1 px-4 py-5 pb-[calc(env(safe-area-inset-bottom)+32px)] flex flex-col gap-5 fade-up">
-          
-          {/* СКЕЛЕТОН / ЗАГРУЗКА */}
-          {loading && (
-            <div className="flex flex-col items-center justify-center py-24 gap-4 text-txtDim">
-              <Loader2 className="w-8 h-8 animate-spin text-accent" />
-              <span className="text-sm font-medium animate-pulse">Загружаем локации...</span>
-            </div>
-          )}
-          
-          {/* ОШИБКА */}
-          {error && (
-            <div className="bg-red-900/20 border border-red-900/50 rounded-2xl p-4 text-alert flex items-start gap-3">
-              <AlertTriangle className="w-5 h-5 shrink-0 text-alert mt-0.5" />
-              <div className="flex flex-col gap-1">
-                <span className="font-semibold text-sm">Не удалось загрузить данные</span>
-                <p className="text-xs text-alert/70 font-mono">{error}</p>
-              </div>
-            </div>
-          )}
+      {/* Branches */}
+      <div className="px-4 mt-5 space-y-3 pb-8">
+        {activeBranches.length === 0 && (
+          <p className="text-center text-gray-500 py-8">Пока нет активных филиалов</p>
+        )}
 
-          {/* ИСТОРИЯ ЗАКАЗОВ (В стиле тёмных карточек) */}
-          {!loading && !error && (
-            <button 
-              onClick={() => {
-                window.Telegram?.WebApp?.HapticFeedback.impactOccurred('light');
-                onOrdersSelect();
-              }}
-              className="w-full bg-card border border-slate-800 rounded-2xl p-4 flex items-center justify-between active:scale-[0.98] transition-all shadow-md group"
-            >
-              <div className="flex items-center gap-4 min-w-0">
-                {/* Вдавленная плашка для иконки */}
-                <div className="w-12 h-12 rounded-xl bg-surface flex items-center justify-center shrink-0">
-                  <ClipboardList className="w-6 h-6 text-accent" />
+        {activeBranches.map(branch => (
+          <button
+            key={branch.id}
+            onClick={() => handleSelect(branch)}
+            className={`w-full text-left p-4 rounded-2xl bg-white shadow-sm border-2 transition-all active:scale-[0.98]
+              ${selectedBranch?.id === branch.id
+                ? 'border-orange-500 shadow-orange-100 shadow-md'
+                : 'border-transparent'}`}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">🏪</span>
+                  <p className="font-semibold text-gray-800 truncate">{branch.name}</p>
                 </div>
-                <div className="text-left min-w-0">
-                  <div className="font-bold text-lg text-txt tracking-tight">История заказов</div>
-                  <div className="text-sm text-txtDim mt-0.5 truncate">Статусы ваших прошлых покупок</div>
-                </div>
+                {branch.address && (
+                  <p className="text-gray-400 text-sm mt-1 ml-7">{branch.address}</p>
+                )}
               </div>
-              <ChevronRight className="w-6 h-6 text-txtDim group-hover:text-accent transition-colors shrink-0" />
-            </button>
-          )}
-
-          {/* СПИСОК ФИЛИАЛОВ */}
-          {!loading && !error && (
-            <div className="flex flex-col gap-3">
-              <div className="text-xs font-bold text-txtDim uppercase tracking-widest pl-2 mb-1">
-                Ближайшие к вам
+              <div className="text-right flex-shrink-0">
+                {branch.delivery_price != null && (
+                  <span className="text-xs bg-orange-50 text-orange-600 font-semibold px-2 py-1 rounded-lg">
+                    {Number(branch.delivery_price).toLocaleString()} сум
+                  </span>
+                )}
+                <p className="text-xs text-gray-400 mt-1">доставка</p>
               </div>
-              
-              {branches.length === 0 ? (
-                 <div className="text-center p-8 bg-card rounded-2xl text-txtDim text-sm shadow-md border border-slate-800">
-                   К сожалению, сейчас нет доступных филиалов.
-                 </div>
-              ) : (
-                branches.map((branch, index) => (
-                  <BranchCard 
-                    key={branch.id} 
-                    branch={branch} 
-                    index={index} 
-                    onClick={handleBranchClick} 
-                  />
-                ))
-              )}
             </div>
-          )}
-        </main>
+          </button>
+        ))}
+
+        <button
+          onClick={() => navigate('/orders')}
+          className="w-full mt-2 py-3 rounded-xl border border-gray-200 bg-white text-gray-600 text-sm font-medium flex items-center justify-center gap-2"
+        >
+          <span>📦</span>
+          <span>История заказов</span>
+        </button>
+      </div>
     </div>
-  );
+  )
 }

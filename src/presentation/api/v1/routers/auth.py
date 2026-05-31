@@ -85,7 +85,6 @@ async def tg_init_data(
     init_data: dict = Depends(verify_webapp_signature_dynamic),
     use_case: VerifyWebAppSignatureUseCase = Depends(verify_webapp_signature_use_case)
 ):
-    print("here")
     user_data = init_data.get("user", {})
     user=UserTelegramDTO(
             telegram_id=user_data.get("id"),
@@ -97,5 +96,5 @@ async def tg_init_data(
         username=user_data.get("username")
     )
     token = await use_case.execute(user_telegram_inition_dto=user_telegram)
-    print(token)
+    print(f"token: {token}")
     return token

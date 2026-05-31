@@ -33,7 +33,7 @@ class GetUserDTO(BaseModel):
     branch_id: int
 
 class GetUsersDTO(BaseModel):
-    users: list[GetUserDTO]
+    items: list[GetUserDTO]
 
 class GetUsersInputDTO(BaseModel):
     role: str

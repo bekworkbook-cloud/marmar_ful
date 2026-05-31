@@ -28,7 +28,7 @@ class BranchCreateDTO(BaseModel):
     is_active: bool = True
 
 class BranchesDTO(BaseModel):
-    branches: list[BranchDTO]
+    items: list[BranchDTO]
 
 class BranchIdDTO(BaseModel):
     id: int 

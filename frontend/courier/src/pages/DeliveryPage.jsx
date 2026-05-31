@@ -1,178 +1,154 @@
-// src/pages/DeliveryPage.jsx
-import React, { useState, useEffect } from 'react';
-import { apiClient } from '../api/client';
-import { useAuthStore } from '../store/auth';
-import BackButton from '../components/BackButton';
-import StatusBadge from '../components/StatusBadge';
-import LeafletMap from '../components/LeafletMap';
+import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { orderApi } from '../api/api'
+import useStore from '../store/useStore'
 
-export default function DeliveryPage({ orderId, onBack }) {
-  const myCourierId = useAuthStore((s) => s.courierId);
-  const [order, setOrder] = useState(null);
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
+const STATUS_STYLE = {
+  ACCEPTED:    { badge: 'bg-blue-100 text-blue-700',    label: 'Принят' },
+  IN_DELIVERY: { badge: 'bg-violet-100 text-violet-700',label: 'Доставляется' },
+  PENDING:     { badge: 'bg-amber-100 text-amber-700',  label: 'Ожидается' },
+  DELIVERED:   { badge: 'bg-green-100 text-green-700',  label: 'Доставлен' },
+  CANCELLED:   { badge: 'bg-red-100 text-red-700',      label: 'Отменён' },
+}
 
-  const fetchDetails = async () => {
-    setLoading(true);
-    try {
-      // Параллельные запросы к бэкенду
-      const [orderData, itemsData] = await Promise.all([
-        apiClient(`/orders/${orderId}`),
-        apiClient(`/orders/${orderId}/items`)
-      ]);
-      setOrder(orderData);
-      setItems(itemsData.order_items || []);
-    } catch (error) {
-      alert('Ошибка получения деталей заказа: ' + error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+export default function DashboardPage() {
+  const navigate = useNavigate()
+  const user = useStore(s => s.user)
+  const [orders, setOrders] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState('active')
+
+  const load = useCallback(() => {
+    setLoading(true)
+    orderApi
+      .list()
+      .then(r => {
+        const data = r.data
+        setOrders(Array.isArray(data) ? data : data?.items || [])
+      })
+      .finally(() => setLoading(false))
+  }, [])
 
   useEffect(() => {
-    if (orderId) fetchDetails();
-  }, [orderId]);
+    load()
+    const interval = setInterval(load, 30000)
+    return () => clearInterval(interval)
+  }, [load])
 
-  // 1. Привязать курьера к заказу (Взять в работу)
-  const handleClaimOrder = async () => {
-    setActionLoading(true);
-    try {
-      await apiClient(`/orders/${orderId}/courier?order_personnel_dto=${myCourierId}`, {
-        method: 'PATCH'
-      });
-      // После привязки сразу переводим заказ в статус 'delivering' для непрерывности процесса
-      await apiClient(`/orders/${orderId}/status`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status: 'delivering' })
-      });
-      await fetchDetails();
-    } catch (error) {
-      alert('Не удалось взять заказ: ' + error.message);
-    } finally {
-      setActionLoading(false);
-    }
-  };
+  const activeOrders = orders.filter(o =>
+    ['ACCEPTED', 'IN_DELIVERY'].includes(o.status)
+  )
+  const historyOrders = orders.filter(o =>
+    ['DELIVERED', 'CANCELLED'].includes(o.status)
+  )
 
-  // 2. Изменить статус (например, перевести из accepted в delivering вручную, если необходимо)
-  const handleUpdateStatus = async (targetStatus) => {
-    setActionLoading(true);
-    try {
-      await apiClient(`/orders/${orderId}/status`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status: targetStatus })
-      });
-      if (targetStatus === 'completed') {
-        onBack(); // Возвращаем на главную панель после завершения
-      } else {
-        await fetchDetails();
-      }
-    } catch (error) {
-      alert('Ошибка обновления статуса: ' + error.message);
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col">
-        <BackButton onClick={onBack} title="Назад к списку" />
-        <div className="flex-1 flex items-center justify-center text-slate-400 text-sm">Загрузка информации...</div>
-      </div>
-    );
-  }
-
-  if (!order) return null;
-
-  const isAssignedToMe = order.courier_id === myCourierId;
-  const isFreeOrder = order.courier_id === null;
-  const formattedTotalPrice = order.total_price.toLocaleString('ru-RU') + ' сум';
+  const displayed = activeTab === 'active' ? activeOrders : historyOrders
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex flex-col pb-[env(safe-area-inset-bottom,16px)]">
-      <BackButton onClick={onBack} title="Заказы" />
-
-      <div className="p-4 space-y-4 flex-1 overflow-y-auto">
-        {/* Главный инфо-блок */}
-        <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm space-y-3">
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg font-black text-slate-900 dark:text-white">Заказ #{order.id}</h2>
-            <StatusBadge status={order.status} />
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-green-600 px-4 pt-12 pb-5">
+        <div className="flex items-center justify-between mb-1">
+          <div>
+            <p className="text-green-200 text-xs">Панель курьера</p>
+            <h1 className="text-white text-xl font-bold">
+              {user?.first_name || user?.username || 'Курьер'}
+            </h1>
           </div>
-          <div className="text-sm space-y-2 text-slate-600 dark:text-slate-300">
-            <p><span className="font-semibold text-slate-900 dark:text-white">Адрес:</span> {order.address}</p>
-            {order.landmark && (
-              <p className="text-xs bg-slate-50 dark:bg-slate-850 p-2 rounded-lg italic text-slate-500">
-                <span className="font-semibold not-italic text-slate-700 dark:text-slate-400">Ориентир:</span> {order.landmark}
-              </p>
-            )}
-            <p><span className="font-semibold text-slate-900 dark:text-white">Оплата:</span> {order.payment_method.toUpperCase()}</p>
+          <button
+            onClick={load}
+            className="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center text-white text-lg"
+          >
+            ↻
+          </button>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 gap-3 mt-4">
+          <div className="bg-green-500/60 rounded-xl p-3 text-center">
+            <p className="text-2xl font-bold text-white">{activeOrders.length}</p>
+            <p className="text-green-200 text-xs mt-0.5">Активные заказы</p>
+          </div>
+          <div className="bg-green-500/60 rounded-xl p-3 text-center">
+            <p className="text-2xl font-bold text-white">{historyOrders.filter(o => o.status === 'DELIVERED').length}</p>
+            <p className="text-green-200 text-xs mt-0.5">Доставлено (сегодня)</p>
           </div>
         </div>
 
-        {/* Интерактивная Read-Only Карта */}
-        <LeafletMap latitude={order.latitude} longitude={order.longitude} />
-
-        {/* Содержимое корзины/заказа */}
-        <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-100 dark:border-slate-700 shadow-sm">
-          <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">Состав заказа</h3>
-          <div className="divide-y divide-slate-100 dark:divide-slate-700">
-            {items.map((item) => (
-              <div key={item.id} className="py-2.5 flex justify-between text-sm text-slate-800 dark:text-slate-200">
-                <div>
-                  <span className="font-semibold">Товар #{item.product_id}</span>
-                  <span className="text-xs text-slate-400 block">{item.price_at_purchase.toLocaleString('ru-RU')} сум / шт</span>
-                </div>
-                <span className="font-bold text-slate-900 dark:text-white">x{item.quantity}</span>
-              </div>
-            ))}
-          </div>
-          <div className="pt-3 border-t border-slate-100 dark:border-slate-700 mt-2 flex justify-between font-black text-slate-900 dark:text-white">
-            <span>ИТОГО К ОПЛАТЕ:</span>
-            <span>{formattedTotalPrice}</span>
-          </div>
+        {/* Tabs */}
+        <div className="flex gap-1 bg-green-500/40 rounded-xl p-1 mt-3">
+          {[
+            { key: 'active',  label: `Активные (${activeOrders.length})` },
+            { key: 'history', label: `История (${historyOrders.length})` },
+          ].map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-colors
+                ${activeTab === tab.key ? 'bg-white text-green-700' : 'text-green-100'}`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Экшен-кнопки (Фиксированный подвал с безопасной зоной смартфона) */}
-      <div className="p-4 bg-white dark:bg-slate-850 border-t border-slate-200 dark:border-slate-700 sticky bottom-0">
-        {isFreeOrder && (
-          <button
-            onClick={handleClaimOrder}
-            disabled={actionLoading}
-            className="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-blue-500/20 active:scale-[0.98] transition-transform disabled:opacity-50"
-          >
-            {actionLoading ? 'Обработка...' : 'Взять заказ и начать доставку'}
-          </button>
-        )}
-
-        {isAssignedToMe && order.status === 'accepted' && (
-          <button
-            onClick={() => handleUpdateStatus('delivering')}
-            disabled={actionLoading}
-            className="w-full bg-indigo-600 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-indigo-500/20 active:scale-[0.98] transition-transform disabled:opacity-50"
-          >
-            {actionLoading ? 'Обработка...' : 'Начать доставку (В пути)'}
-          </button>
-        )}
-
-        {isAssignedToMe && order.status === 'delivering' && (
-          <button
-            onClick={() => handleUpdateStatus('completed')}
-            disabled={actionLoading}
-            className="w-full bg-green-600 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-green-500/20 active:scale-[0.98] transition-transform disabled:opacity-50"
-          >
-            {actionLoading ? 'Обработка...' : 'Завершить заказ (Доставлен)'}
-          </button>
-        )}
-
-        {!isAssignedToMe && !isFreeOrder && (
-          <div className="w-full bg-slate-100 dark:bg-slate-800 text-center text-sm text-slate-500 py-3 rounded-xl font-medium">
-            Заказ закреплен за другим курьером
+      {/* Orders */}
+      <div className="px-4 py-4 space-y-3">
+        {loading && (
+          <div className="flex justify-center py-12">
+            <div className="w-8 h-8 border-4 border-green-500 border-t-transparent rounded-full animate-spin" />
           </div>
         )}
+
+        {!loading && displayed.length === 0 && (
+          <div className="flex flex-col items-center py-12 gap-2">
+            <span className="text-5xl">{activeTab === 'active' ? '🏍️' : '📦'}</span>
+            <p className="text-gray-500 text-sm">
+              {activeTab === 'active' ? 'Нет активных заказов' : 'История пуста'}
+            </p>
+          </div>
+        )}
+
+        {displayed.map(order => {
+          const st = STATUS_STYLE[order.status] || STATUS_STYLE.PENDING
+          return (
+            <button
+              key={order.id}
+              onClick={() => navigate(`/delivery/${order.id}`)}
+              className="w-full text-left bg-white rounded-2xl p-4 shadow-sm border border-gray-100 active:scale-[0.98] transition-transform"
+            >
+              <div className="flex items-start justify-between mb-2">
+                <span className="font-bold text-gray-800">#{order.id}</span>
+                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${st.badge}`}>
+                  {st.label}
+                </span>
+              </div>
+
+              {order.address && (
+                <p className="text-sm text-gray-600 flex items-start gap-1.5 mb-2">
+                  <span>📍</span>
+                  <span>{order.address}</span>
+                </p>
+              )}
+
+              {order.landmark && (
+                <p className="text-xs text-gray-400 flex items-start gap-1.5 mb-2">
+                  <span>🏁</span>
+                  <span>{order.landmark}</span>
+                </p>
+              )}
+
+              <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                <span className="text-xs text-gray-400 capitalize">{order.payment_method}</span>
+                <span className="font-bold text-green-600">
+                  {Number(order.total_price).toLocaleString()} сум
+                </span>
+              </div>
+            </button>
+          )
+        })}
       </div>
     </div>
-  );
+  )
 }

@@ -8,9 +8,9 @@ class VerifyCourierAccessUseCase:
         self.user_repo = user_repo
     
     async def execute(self, user_telegram_dto: UserTelegramDTO) -> None:
-        print(user_telegram_dto.telegram_id)
+        # print(user_telegram_dto.telegram_id)
         user = await self.user_repo.get_by_telegram_id(telegram_id=user_telegram_dto.telegram_id)
-        print(user)
+        # print(user)
         if not user:
             raise ForbiddenError("Courier by id not found")
         

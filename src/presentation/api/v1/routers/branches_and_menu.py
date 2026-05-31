@@ -38,8 +38,9 @@ async def get_branches(
     token: str = Depends(get_token_data),
     use_case: GetBranchesUseCase = Depends(get_branches_di)
 ):    
-    print(token)
-    return await use_case.execute()
+    branches = await use_case.execute()
+    print(branches)
+    return branches
 
 
 @router.post(

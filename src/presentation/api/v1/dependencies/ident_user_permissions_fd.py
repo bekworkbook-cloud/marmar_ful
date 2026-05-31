@@ -11,7 +11,6 @@ class PermissionChecker:
 
     async def __call__(self, token_data: TokenDataDTO = Depends(get_token_data)):
         user_role_str = token_data.user_role
-        print("here")
         
         try:
             user_role = UserRole(user_role_str)

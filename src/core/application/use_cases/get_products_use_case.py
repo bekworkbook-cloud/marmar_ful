@@ -37,4 +37,4 @@ class GetProductsUseCase:
             )
             for product in product_entities
         ]
-        return ProductsDTO(products=product_dto_list)
+        return ProductsDTO(items=product_dto_list)

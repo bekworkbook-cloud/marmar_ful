@@ -9,7 +9,7 @@ export default defineConfig({
     outDir: '../../static/customer',
     emptyOutDir: true 
   },
-  css: {
-    transformer: 'postcss', // ← явно указываем postcss вместо lightningcss
-  }
+  // css: {
+  //   transformer: 'postcss', // ← явно указываем postcss вместо lightningcss
+  // }
 })

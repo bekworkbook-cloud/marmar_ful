@@ -64,6 +64,9 @@ ROLE_PERMISSIONS = {
         Permission.UPDATE_ORDER,
         Permission.GET_ORDER_ITEMS,
         Permission.POST_ORDER,
+        # Messages
+        Permission.GET_MESSAGES,
+        Permission.POST_MESSAGES,
         # Auth
         Permission.GET_ME,
         Permission.DELETE_USER,
@@ -92,6 +95,9 @@ ROLE_PERMISSIONS = {
         # Auth
         Permission.GET_ME,
         Permission.DELETE_USER,
+        # Messages
+        Permission.GET_MESSAGES,
+        Permission.POST_MESSAGES,
     },
     
     UserRole.ADMIN: {
@@ -121,6 +127,7 @@ ROLE_PERMISSIONS = {
         Permission.POST_ORDER,
         # Messages
         Permission.GET_MESSAGES,
+        Permission.POST_MESSAGES,
         # Payment Logs
         Permission.GET_PAYMENT_LOGS,
         Permission.UPDATE_PAYMENT_LOGS,
