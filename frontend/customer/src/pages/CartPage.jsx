@@ -4,6 +4,7 @@ import useStore from '../store/useStore'
 import { orderApi } from '../api/api'
 import CartItem from '../components/CartItem'
 
+
 const PAYMENT_METHODS = [
   { id: 'cash', label: 'Наличные', icon: '💵' },
   // { id: 'card', label: 'Карта', icon: '💳' },
@@ -19,6 +20,9 @@ export default function CartPage() {
 
   const [address, setAddress] = useState('')
   const [landmark, setLandmark] = useState('')
+  const [longitude, setLangitude] = useState('')
+  const [latitude, setLatitude] = useState('')
+
   const [paymentMethod, setPaymentMethod] = useState('cash')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState(null)
@@ -45,17 +49,52 @@ export default function CartPage() {
     setSubmitting(true)
 
     const tg = window.Telegram?.WebApp
-    const latitude = tg?.locationData?.latitude || 0
-    const longitude = tg?.locationData?.longitude || 0
+    let latitude = 0
+    let longitude = 0
+
+    // 1. Создаем вспомогательную функцию для получения координат через Promise
+    const fetchTelegramLocation = () => {
+      return new Promise((resolve) => {
+        // Если открыто не в Telegram или версия API старая
+        if (!tg || !tg.LocationManager) {
+          resolve({ lat: 0, lon: 0 })
+          return
+        }
+
+        // Функция самого запроса
+        const requestLocation = () => {
+          tg.LocationManager.getLocation((data) => {
+            if (data) {
+              resolve({ lat: data.latitude, lon: data.longitude })
+            } else {
+              // Если пользователь отклонил запрос или произошла ошибка
+              resolve({ lat: 0, lon: 0 })
+            }
+          })
+        }
+
+        // 2. Инициализируем LocationManager, если он еще не инициализирован
+        if (!tg.LocationManager.isInited) {
+          tg.LocationManager.init(() => {
+            requestLocation()
+          })
+        } else {
+          requestLocation()
+        }
+      })
+    }
 
     try {
+      // 3. Дожидаемся ответа от Telegram
+      const coords = await fetchTelegramLocation()
+      latitude = coords.lat
+      longitude = coords.lon
+
       await orderApi.create({
         order_items: cart.map(i => ({
           product_id: i.product_id,
           quantity: i.quantity,
-          // price: i.price, // убрать из кода который в cart добавляет поле price
         })),
-        // customer_id: user?.id,
         branch_id: selectedBranch?.id,
         address,
         landmark,
@@ -63,6 +102,7 @@ export default function CartPage() {
         longitude,
         payment_method: paymentMethod,
       })
+      
       clearCart()
       navigate('/orders')
     } catch (e) {
@@ -129,6 +169,20 @@ export default function CartPage() {
             />
           </div>
         </div>
+
+          {/* <div>
+            <label className="block text-xs font-medium text-gray-500 mb-1">
+              Укажите точку на карте
+              {hasLocation && (
+                <span className="text-green-600 font-mono ml-2">
+                  ({latitude.toFixed(4)}, {longitude.toFixed(4)})
+                </span>
+              )}
+            </label>
+            <div style={{ width: '100%', height: '192px', borderRadius: '8px', overflow: 'hidden', border: '1px solid #e5e7eb', position: 'relative', zIndex: 1 }}>
+              <LeafletMap latitude={latitude} longitude={longitude} onMapClick={handleMapClick} />
+            </div>
+          </div> */}
 
         {/* Payment method */}
         <div className="bg-white rounded-2xl p-4 shadow-sm">
