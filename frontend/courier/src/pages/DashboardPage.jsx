@@ -4,14 +4,20 @@ import { orderApi } from '../api/api'
 import useStore from '../store/useStore'
 
 const STATUS_STYLE = {
-  ACCEPTED:    { badge: 'bg-blue-100 text-blue-700',    label: 'Принят' },
-  IN_DELIVERY: { badge: 'bg-violet-100 text-violet-700',label: 'Доставляется' },
-  PENDING:     { badge: 'bg-amber-100 text-amber-700',  label: 'Ожидается' },
-  DELIVERED:   { badge: 'bg-green-100 text-green-700',  label: 'Доставлен' },
-  CANCELLED:   { badge: 'bg-red-100 text-red-700',      label: 'Отменён' },
+  pending:               { badge: 'bg-amber-100 text-amber-700',   label: 'Ожидает' },
+  awaiting_confirmation: { badge: 'bg-yellow-100 text-yellow-700', label: 'Ожидает подтверждения' },
+  confirmed:             { badge: 'bg-blue-100 text-blue-700',     label: 'Принят' },
+  preparing:             { badge: 'bg-orange-100 text-orange-700', label: 'Готовится' },
+  in_transit:            { badge: 'bg-violet-100 text-violet-700', label: 'В пути' },
+  delivered:             { badge: 'bg-green-100 text-green-700',   label: 'Доставлен' },
+  closed:                { badge: 'bg-green-100 text-green-800',   label: 'Закрыт' },
+  cancelled:             { badge: 'bg-red-100 text-red-700',       label: 'Отменён' },
 }
 
-export default function DashboardPage() {
+const ACTIVE_STATUSES  = ['confirmed', 'preparing', 'in_transit']
+const HISTORY_STATUSES = ['delivered', 'closed', 'cancelled']
+
+export default function CourierDashboardPage() {
   const navigate = useNavigate()
   const user = useStore(s => s.user)
   const [orders, setOrders] = useState([])
@@ -24,7 +30,12 @@ export default function DashboardPage() {
       .list()
       .then(r => {
         const data = r.data
-        setOrders(Array.isArray(data) ? data : data?.items || [])
+        const items = Array.isArray(data) ? data : data?.items || []
+        setOrders(
+          items
+            .map(o => ({ ...o, status: o.status?.toLowerCase() }))
+            .filter(o => o.status !== 'cart')
+        )
       })
       .finally(() => setLoading(false))
   }, [])
@@ -35,14 +46,9 @@ export default function DashboardPage() {
     return () => clearInterval(interval)
   }, [load])
 
-  const activeOrders = orders.filter(o =>
-    ['ACCEPTED', 'IN_DELIVERY'].includes(o.status)
-  )
-  const historyOrders = orders.filter(o =>
-    ['DELIVERED', 'CANCELLED'].includes(o.status)
-  )
-
-  const displayed = activeTab === 'active' ? activeOrders : historyOrders
+  const activeOrders  = orders.filter(o => ACTIVE_STATUSES.includes(o.status))
+  const historyOrders = orders.filter(o => HISTORY_STATUSES.includes(o.status))
+  const displayed     = activeTab === 'active' ? activeOrders : historyOrders
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -70,8 +76,10 @@ export default function DashboardPage() {
             <p className="text-green-200 text-xs mt-0.5">Активные заказы</p>
           </div>
           <div className="bg-green-500/60 rounded-xl p-3 text-center">
-            <p className="text-2xl font-bold text-white">{historyOrders.filter(o => o.status === 'DELIVERED').length}</p>
-            <p className="text-green-200 text-xs mt-0.5">Доставлено (сегодня)</p>
+            <p className="text-2xl font-bold text-white">
+              {historyOrders.filter(o => o.status === 'delivered').length}
+            </p>
+            <p className="text-green-200 text-xs mt-0.5">Доставлено</p>
           </div>
         </div>
 
@@ -110,8 +118,8 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {displayed.map(order => {
-          const st = STATUS_STYLE[order.status] || STATUS_STYLE.PENDING
+        {!loading && displayed.map(order => {
+          const st = STATUS_STYLE[order.status] || { badge: 'bg-gray-100 text-gray-500', label: order.status }
           return (
             <button
               key={order.id}

@@ -30,3 +30,4 @@ class GetUsersUseCase:
             for user in user_entities
         ]
         return GetUsersDTO(items=users_dto_list)
+        

@@ -13,6 +13,7 @@ class PatchOrderAcceptUseCase:
             raise NotFoundException(f"Order with id {create_order_input_dto.order_id} not found")
         
         order_entity.change_accept(is_accepted=create_order_input_dto.is_accepted)
+        order_entity.change_operator(operator_id=create_order_input_dto.current_user_id)
         
         updated_entity = await self.order_repo.update(order_entity)
         

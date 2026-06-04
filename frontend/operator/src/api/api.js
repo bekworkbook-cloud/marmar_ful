@@ -2,7 +2,14 @@ import axios from 'axios'
 
 const BASE_URL = import.meta.env.VITE_API_URL || (window.location.origin + '/api/v1')
 
-const http = axios.create({ baseURL: BASE_URL })
+const http = axios.create(
+  {
+    baseURL: BASE_URL,
+    headers: {
+      'ngrok-skip-browser-warning': 'true',
+    }
+  }
+)
 
 http.interceptors.request.use(cfg => {
   const token = localStorage.getItem('access_token')
@@ -50,5 +57,9 @@ export const orderApi = {
 
 export const userApi = {
   couriers: (branchId) =>
-    http.get('/users/', { params: { role: 'courier', branch_id: branchId, limit: 100 } }),
+    http.get('/users/', { params: { role: 'courier', branch_id: branchId, limit: 100 , offset: 0} }),
 }
+// export const userApi = {
+  // couriers: () =>
+    // http.get('/users/', { params: { role: 'courier', limit: 100 } }),
+// }

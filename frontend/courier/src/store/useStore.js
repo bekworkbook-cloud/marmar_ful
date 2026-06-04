@@ -5,17 +5,10 @@ const useStore = create(
   persist(
     (set) => ({
       user: null,
-      token: localStorage.getItem('access_token') || null,
-
+      token: null,
       setUser: (user) => set({ user }),
-      setToken: (token) => {
-        localStorage.setItem('access_token', token)
-        set({ token })
-      },
-      clearAuth: () => {
-        localStorage.removeItem('access_token')
-        set({ user: null, token: null })
-      },
+      setToken: (token) => set({ token }),
+      clearAuth: () => set({ user: null, token: null }),
     }),
     {
       name: 'marmar-courier',

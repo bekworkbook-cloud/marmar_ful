@@ -53,7 +53,9 @@ async def get_users(
         limit=limit, 
         offset=offset
     )
-    return await use_case.execute(get_users_input_dto=get_users_input_dto)
+    users = await use_case.execute(get_users_input_dto=get_users_input_dto)
+    print(users)
+    return users
 
 
 @router.get("/{user_id}", dependencies=[Depends(PermissionChecker(Permission.GET_USERS))])

@@ -2,21 +2,35 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { orderApi } from '../api/api'
 
-const STATUS_TABS = [
-  { key: 'all',         label: 'Все' },
-  { key: 'PENDING',     label: 'Новые' },
-  { key: 'ACCEPTED',    label: 'Приняты' },
-  { key: 'IN_DELIVERY', label: 'В пути' },
-  { key: 'DELIVERED',   label: 'Завершены' },
+export const STATUS_TABS = [
+  { key: 'all',                   label: 'Все' },
+  { key: 'pending',               label: 'Новые' },
+  { key: 'awaiting_confirmation', label: 'Ожидают' },
+  { key: 'confirmed',             label: 'Приняты' },
+  { key: 'preparing',             label: 'Готовятся' },
+  { key: 'in_transit',            label: 'В пути' },
+  { key: 'delivered',             label: 'Доставлены' },
+  { key: 'closed',                label: 'Закрыты' },
+  { key: 'cancelled',             label: 'Отменённые' },
 ]
 
-const STATUS_STYLE = {
-  PENDING:     { dot: 'bg-amber-400',  badge: 'bg-amber-100 text-amber-700',   label: 'Новый' },
-  ACCEPTED:    { dot: 'bg-blue-400',   badge: 'bg-blue-100 text-blue-700',     label: 'Принят' },
-  IN_DELIVERY: { dot: 'bg-violet-400', badge: 'bg-violet-100 text-violet-700', label: 'В пути' },
-  DELIVERED:   { dot: 'bg-green-400',  badge: 'bg-green-100 text-green-700',   label: 'Доставлен' },
-  CANCELLED:   { dot: 'bg-red-400',    badge: 'bg-red-100 text-red-700',       label: 'Отменён' },
+// Ключи точно соответствуют значениям OrderStatus из бэкенда
+export const STATUS_STYLE = {
+  pending:               { dot: 'bg-amber-400',  badge: 'bg-amber-100 text-amber-700',   label: 'Новый' },
+  awaiting_confirmation: { dot: 'bg-yellow-400', badge: 'bg-yellow-100 text-yellow-700', label: 'Ожидает подтверждения' },
+  confirmed:             { dot: 'bg-blue-400',   badge: 'bg-blue-100 text-blue-700',     label: 'Принят' },
+  preparing:             { dot: 'bg-orange-400', badge: 'bg-orange-100 text-orange-700', label: 'Готовится' },
+  in_transit:            { dot: 'bg-violet-400', badge: 'bg-violet-100 text-violet-700', label: 'В пути' },
+  delivered:             { dot: 'bg-green-400',  badge: 'bg-green-100 text-green-700',   label: 'Доставлен' },
+  closed:                { dot: 'bg-green-600',  badge: 'bg-green-100 text-green-800',   label: 'Закрыт' },
+  cancelled:             { dot: 'bg-red-400',    badge: 'bg-red-100 text-red-700',       label: 'Отменён' },
 }
+
+export const FALLBACK_STYLE = { dot: 'bg-gray-300', badge: 'bg-gray-100 text-gray-500' }
+
+// Статусы которые не показываем пользователю
+export const HIDDEN_STATUSES = ['cart']
+
 
 export default function DashboardPage() {
   const navigate = useNavigate()
@@ -30,7 +44,12 @@ export default function DashboardPage() {
       .list()
       .then(r => {
         const data = r.data
-        setOrders(Array.isArray(data) ? data : data?.items || [])
+        const items = Array.isArray(data) ? data : data?.items || []
+        // нормализуем статус в нижний регистр + исключаем корзины
+        setOrders(items
+          .map(o => ({ ...o, status: o.status?.toLowerCase() }))
+          .filter(o => o.status !== 'cart')
+        )
       })
       .finally(() => setLoading(false))
   }, [])
@@ -45,7 +64,7 @@ export default function DashboardPage() {
     ? orders
     : orders.filter(o => o.status === activeTab)
 
-  const pendingCount = orders.filter(o => o.status === 'PENDING').length
+  const pendingCount = orders.filter(o => o.status === 'pending').length
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -54,9 +73,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-white text-xl font-bold">Заказы</h1>
-            <p className="text-indigo-200 text-sm mt-0.5">
-              Всего: {orders.length}
-            </p>
+            <p className="text-indigo-200 text-sm mt-0.5">Всего: {orders.length}</p>
           </div>
           <div className="flex items-center gap-2">
             {pendingCount > 0 && (
@@ -73,7 +90,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Status tabs */}
+        {/* Tabs */}
         <div className="flex gap-2 mt-4 overflow-x-auto scrollbar-hide pb-1">
           {STATUS_TABS.map(tab => (
             <button
@@ -95,7 +112,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Order list */}
+      {/* List */}
       <div className="px-4 py-4 space-y-3">
         {loading && (
           <div className="flex justify-center py-12">
@@ -110,8 +127,8 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {filtered.map(order => {
-          const st = STATUS_STYLE[order.status] || STATUS_STYLE.PENDING
+        {!loading && filtered.map(order => {
+          const st = STATUS_STYLE[order.status] || { ...FALLBACK_STYLE, label: order.status }
           return (
             <button
               key={order.id}
@@ -130,7 +147,7 @@ export default function DashboardPage() {
 
               {order.address && (
                 <p className="text-sm text-gray-600 mb-2 flex items-start gap-1.5">
-                  <span className="text-base">📍</span>
+                  <span>📍</span>
                   <span>{order.address}</span>
                 </p>
               )}
@@ -138,18 +155,14 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
                 <span className="text-xs text-gray-400">
                   {order.created_at
-                    ? new Date(order.created_at).toLocaleTimeString('ru-RU', {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })
+                    ? new Date(order.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
                     : '—'}
                 </span>
                 <div className="flex items-center gap-3">
-                  {order.courier_id ? (
-                    <span className="text-xs text-green-600 font-medium">✓ Курьер назначен</span>
-                  ) : (
-                    <span className="text-xs text-amber-500 font-medium">Курьер не назначен</span>
-                  )}
+                  {order.courier_id
+                    ? <span className="text-xs text-green-600 font-medium">✓ Курьер назначен</span>
+                    : <span className="text-xs text-amber-500 font-medium">Курьер не назначен</span>
+                  }
                   <span className="font-bold text-indigo-600">
                     {Number(order.total_price).toLocaleString()} сум
                   </span>

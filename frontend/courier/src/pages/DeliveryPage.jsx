@@ -4,17 +4,17 @@ import { orderApi } from '../api/api'
 import useStore from '../store/useStore'
 
 const STATUS_FLOW = [
-  { value: 'ACCEPTED',    label: 'Qabul qilingan',  next: 'IN_DELIVERY', nextLabel: 'Yolga chiqish' },
-  { value: 'IN_DELIVERY', label: 'Yetkazilmoqda',   next: 'DELIVERED',   nextLabel: 'Yetkazib bo\'ldim' },
-  { value: 'DELIVERED',   label: 'Yetkazildi',      next: null,          nextLabel: null },
-  { value: 'CANCELLED',   label: 'Bekor qilindi',   next: null,          nextLabel: null },
+  { value: 'confirmed',  label: 'Qabul qilingan', next: 'in_transit', nextLabel: "Yo'lga chiqish" },
+  { value: 'in_transit', label: 'Yetkazilmoqda',  next: 'delivered',  nextLabel: "Yetkazib bo'ldim" },
+  { value: 'delivered',  label: 'Yetkazildi',     next: null,         nextLabel: null },
+  { value: 'cancelled',  label: 'Bekor qilindi',  next: null,         nextLabel: null },
 ]
 
 const STATUS_STYLE = {
-  ACCEPTED:    'bg-blue-100 text-blue-700',
-  IN_DELIVERY: 'bg-violet-100 text-violet-700',
-  DELIVERED:   'bg-green-100 text-green-700',
-  CANCELLED:   'bg-red-100 text-red-700',
+  confirmed:  'bg-blue-100 text-blue-700',
+  in_transit: 'bg-violet-100 text-violet-700',
+  delivered:  'bg-green-100 text-green-700',
+  cancelled:  'bg-red-100 text-red-700',
 }
 
 export default function DeliveryPage() {
@@ -71,7 +71,7 @@ export default function DeliveryPage() {
   const openMap = () => {
     if (order?.latitude && order?.longitude) {
       window.open(
-        `https://maps.google.com/?q=${order.latitude},${order.longitude}`,
+        `https://yandex.ru/maps/?rtext=~${order.latitude},${order.longitude}&rtt=pd`,
         '_blank'
       )
     }
@@ -108,7 +108,7 @@ export default function DeliveryPage() {
               {flow?.label || order.status}
             </span>
           </div>
-          <button
+          {/* <button
             onClick={() => setShowChat(v => !v)}
             className="ml-auto relative w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center text-lg"
           >
@@ -118,7 +118,7 @@ export default function DeliveryPage() {
                 {messages.length}
               </span>
             )}
-          </button>
+          </button> */}
         </div>
       </div>
 
@@ -206,7 +206,7 @@ export default function DeliveryPage() {
         </div>
 
         {/* Chat (collapsible) */}
-        {showChat && (
+        {/* {showChat && (
           <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
             <div className="px-4 py-3 border-b border-gray-100">
               <h3 className="font-semibold text-gray-800">Chat</h3>
@@ -249,7 +249,7 @@ export default function DeliveryPage() {
               </button>
             </div>
           </div>
-        )}
+        )} */}
       </div>
 
       {/* Action button */}
