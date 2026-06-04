@@ -7,7 +7,7 @@ import {
   categoriesApi,
   productsApi,
   staffApi,
-} from './api'
+} from '../api/api'
 
 const useAdminStore = create(
   persist(
@@ -43,7 +43,10 @@ const useAdminStore = create(
 
       // ── auth ───────────────────────────────────────────────────────────────
 
-      setToken: (token) => set({ token }),
+      login: async (username, password) => {
+        const data = await get()._req(() => authApi.login(username, password))
+        set({ token: data.access_token })
+      },
 
       logout: () => set({
         token: null,

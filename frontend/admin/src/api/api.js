@@ -1,58 +1,279 @@
-import axios from 'axios'
+const API_BASE = '/api/v1'
 
-const BASE_URL = import.meta.env.VITE_API_URL || (window.location.origin + '/api/v1')
+const getHeaders = (token, isFormData = false) => {
+  const headers = { Authorization: `Bearer ${token}` }
+  if (!isFormData) headers['Content-Type'] = 'application/json'
+  return headers
+}
 
-const http = axios.create(
-  {
-    baseURL: BASE_URL,
-    headers: {
-      'ngrok-skip-browser-warning': 'true',
-    }
+const handleResponse = async (res) => {
+  if (res.status === 204) return null
+  const data = await res.json()
+  if (!res.ok) {
+    const message =
+      data?.detail?.[0]?.msg ||
+      data?.detail ||
+      `HTTP error ${res.status}`
+    throw new Error(message)
   }
-)
+  return data
+}
 
-http.interceptors.request.use(cfg => {
-  const token = localStorage.getItem('access_token')
-  if (token) cfg.headers.Authorization = `Bearer ${token}`
-  return cfg
-})
+const buildQuery = (params) =>
+  new URLSearchParams(
+    Object.fromEntries(Object.entries(params).filter(([, v]) => v != null))
+  ).toString()
 
-http.interceptors.response.use(
-  res => res,
-  err => {
-    if (err.response?.status === 401) localStorage.removeItem('access_token')
-    return Promise.reject(err)
-  }
-)
+// ─── Auth ────────────────────────────────────────────────────────────────────
 
 export const authApi = {
-  initTelegram: (initData) =>
-    http.post('/auth/init_data/customer_bot', {}, {
-      headers: { 'x-telegram-init-data': initData },
-    }),
-  login: (username, password) =>
-    http.post('/auth/login/', { username, password }),
-  me: () => http.get('/auth/me'),
+  /** POST /api/v1/auth/login → TokenDTO */
+  login: async (username, password) => {
+    const res = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    })
+    return handleResponse(res)
+  },
 }
 
-export const branchApi = {
-  list: () => http.get('/branches/'),
+// ─── Orders ──────────────────────────────────────────────────────────────────
+
+export const ordersApi = {
+  /** GET /api/v1/orders/ → OrdersDTO */
+  getAll: async (token, params = { limit: 100, offset: 0 }) => {
+    const res = await fetch(`${API_BASE}/orders/?${buildQuery(params)}`, {
+      headers: getHeaders(token),
+    })
+    return handleResponse(res)
+  },
+
+  /** GET /api/v1/orders/{order_id} → OrderDTO */
+  getById: async (token, orderId) => {
+    const res = await fetch(`${API_BASE}/orders/${orderId}`, {
+      headers: getHeaders(token),
+    })
+    return handleResponse(res)
+  },
+
+  /** GET /api/v1/orders/{order_id}/items → OrderItemsDTO */
+  getItems: async (token, orderId, params = { limit: 20, offset: 0 }) => {
+    const res = await fetch(`${API_BASE}/orders/${orderId}/items?${buildQuery(params)}`, {
+      headers: getHeaders(token),
+    })
+    return handleResponse(res)
+  },
+
+  /** PATCH /api/v1/orders/{order_id}/status → OrderDTO */
+  updateStatus: async (token, orderId, status) => {
+    const res = await fetch(`${API_BASE}/orders/${orderId}/status`, {
+      method: 'PATCH',
+      headers: getHeaders(token),
+      body: JSON.stringify({ status }),
+    })
+    return handleResponse(res)
+  },
+
+  /** PATCH /api/v1/orders/{order_id}/courier → OrderDTO */
+  assignCourier: async (token, orderId, courierId) => {
+    const res = await fetch(
+      `${API_BASE}/orders/${orderId}/courier?order_personnel_dto=${courierId}`,
+      { method: 'PATCH', headers: getHeaders(token) },
+    )
+    return handleResponse(res)
+  },
+
+  /** PATCH /api/v1/orders/{order_id}/operator → OrderDTO */
+  assignOperator: async (token, orderId, operatorId) => {
+    const res = await fetch(
+      `${API_BASE}/orders/${orderId}/operator?operator_id=${operatorId}`,
+      { method: 'PATCH', headers: getHeaders(token) },
+    )
+    return handleResponse(res)
+  },
+
+  /** PATCH /api/v1/orders/{order_id}/accept → OrderDTO */
+  accept: async (token, orderId, isAccepted) => {
+    const res = await fetch(`${API_BASE}/orders/${orderId}/accept`, {
+      method: 'PATCH',
+      headers: getHeaders(token),
+      body: JSON.stringify({ is_accepted: isAccepted }),
+    })
+    return handleResponse(res)
+  },
 }
 
-export const categoryApi = {
-  list: (branchId) =>
-    http.get('/categories/', { params: { branch_id: branchId, limit: 100 } }),
+// ─── Branches ────────────────────────────────────────────────────────────────
+
+export const branchesApi = {
+  /** GET /api/v1/branches/ → BranchesDTO */
+  getAll: async (token) => {
+    const res = await fetch(`${API_BASE}/branches/`, { headers: getHeaders(token) })
+    return handleResponse(res)
+  },
+
+  /** POST /api/v1/branches/ → BranchDTO */
+  create: async (token, dto) => {
+    const res = await fetch(`${API_BASE}/branches/`, {
+      method: 'POST',
+      headers: getHeaders(token),
+      body: JSON.stringify(dto),
+    })
+    return handleResponse(res)
+  },
+
+  /** PUT /api/v1/branches/{branch_id} → BranchDTO */
+  update: async (token, branchId, dto) => {
+    const res = await fetch(`${API_BASE}/branches/${branchId}`, {
+      method: 'PUT',
+      headers: getHeaders(token),
+      body: JSON.stringify(dto),
+    })
+    return handleResponse(res)
+  },
+
+  /** DELETE /api/v1/branches/{branch_id} → null */
+  delete: async (token, branchId) => {
+    const res = await fetch(`${API_BASE}/branches/${branchId}`, {
+      method: 'DELETE',
+      headers: getHeaders(token),
+    })
+    return handleResponse(res)
+  },
 }
 
-export const productApi = {
-  list: (categoryId) =>
-    http.get('/products/', { params: { category_id: categoryId, limit: 100 } }),
-  get: (id) => http.get(`/products/${id}`),
+// ─── Categories ──────────────────────────────────────────────────────────────
+
+export const categoriesApi = {
+  /** GET /api/v1/categories/ → CategoriesDTO */
+  getAll: async (token, params = { limit: 100, offset: 0 }) => {
+    const res = await fetch(`${API_BASE}/categories/?${buildQuery(params)}`, {
+      headers: getHeaders(token),
+    })
+    return handleResponse(res)
+  },
+
+  /** POST /api/v1/categories/ → CategoryDTO */
+  create: async (token, dto) => {
+    const res = await fetch(`${API_BASE}/categories/`, {
+      method: 'POST',
+      headers: getHeaders(token),
+      body: JSON.stringify(dto),
+    })
+    return handleResponse(res)
+  },
+
+  /** PUT /api/v1/categories/{category_id} → CategoryDTO */
+  update: async (token, categoryId, dto) => {
+    const res = await fetch(`${API_BASE}/categories/${categoryId}`, {
+      method: 'PUT',
+      headers: getHeaders(token),
+      body: JSON.stringify(dto),
+    })
+    return handleResponse(res)
+  },
+
+  /** DELETE /api/v1/categories/{category_id} → null */
+  delete: async (token, categoryId) => {
+    const res = await fetch(`${API_BASE}/categories/${categoryId}`, {
+      method: 'DELETE',
+      headers: getHeaders(token),
+    })
+    return handleResponse(res)
+  },
 }
 
-export const orderApi = {
-  create: (data) => http.post('/orders/', data),
-  list: () => http.get('/orders/', { params: { limit: 30 } }),
-  get: (id) => http.get(`/orders/${id}/`),
-  items: (id) => http.get(`/orders/${id}/items/`),
+// ─── Products ────────────────────────────────────────────────────────────────
+
+export const productsApi = {
+  /** GET /api/v1/products/ → ProductsDTO */
+  getAll: async (token, params = { limit: 50, offset: 0 }) => {
+    const res = await fetch(`${API_BASE}/products/?${buildQuery(params)}`, {
+      headers: getHeaders(token),
+    })
+    return handleResponse(res)
+  },
+
+  /** POST /api/v1/products/ → ProductDTO */
+  create: async (token, dto) => {
+    const res = await fetch(`${API_BASE}/products/`, {
+      method: 'POST',
+      headers: getHeaders(token),
+      body: JSON.stringify(dto),
+    })
+    return handleResponse(res)
+  },
+
+  /** PUT /api/v1/products/{product_id} → ProductDTO */
+  update: async (token, productId, dto) => {
+    const res = await fetch(`${API_BASE}/products/${productId}`, {
+      method: 'PUT',
+      headers: getHeaders(token),
+      body: JSON.stringify(dto),
+    })
+    return handleResponse(res)
+  },
+
+  /** DELETE /api/v1/products/{product_id} → null */
+  delete: async (token, productId) => {
+    const res = await fetch(`${API_BASE}/products/${productId}`, {
+      method: 'DELETE',
+      headers: getHeaders(token),
+    })
+    return handleResponse(res)
+  },
+
+  /** POST /api/v1/products/{product_id}/image (multipart) → ProductDTO */
+  uploadImage: async (token, productId, file) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    const res = await fetch(`${API_BASE}/products/${productId}/image`, {
+      method: 'POST',
+      headers: getHeaders(token, true),
+      body: formData,
+    })
+    return handleResponse(res)
+  },
+}
+
+// ─── Staff ───────────────────────────────────────────────────────────────────
+
+export const staffApi = {
+  /** GET /api/v1/users/ → Array<UserDTO> */
+  getAll: async (token, params = { limit: 50, offset: 0 }) => {
+    const res = await fetch(`${API_BASE}/users/?${buildQuery(params)}`, {
+      headers: getHeaders(token),
+    })
+    return handleResponse(res)
+  },
+
+  /** POST /api/v1/users/ → {} */
+  create: async (token, dto) => {
+    const res = await fetch(`${API_BASE}/users/`, {
+      method: 'POST',
+      headers: getHeaders(token),
+      body: JSON.stringify(dto),
+    })
+    return handleResponse(res)
+  },
+
+  /** PUT /api/v1/users/{user_id} → {} */
+  update: async (token, userId, dto) => {
+    const res = await fetch(`${API_BASE}/users/${userId}`, {
+      method: 'PUT',
+      headers: getHeaders(token),
+      body: JSON.stringify(dto),
+    })
+    return handleResponse(res)
+  },
+
+  /** DELETE /api/v1/users/{user_id} → null */
+  delete: async (token, userId) => {
+    const res = await fetch(`${API_BASE}/users/${userId}`, {
+      method: 'DELETE',
+      headers: getHeaders(token),
+    })
+    return handleResponse(res)
+  },
 }

@@ -1,15 +1,21 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
-import useStore from './store/useStore'
-import { authApi } from './api/api'
-import MainPage from './pages/MainPage'
-import MenuPage from './pages/MenuPage'
-import ProductPage from './pages/ProductPage'
-import CartPage from './pages/CartPage'
+import useAdminStore from './store/useAdminStore'
+import DashboardPage from './pages/DashboardPage'
 import OrdersPage from './pages/OrdersPage'
+import MenuPage from './pages/MenuPage'
+import BranchesPage from './pages/BranchesPage'
+import StaffPage from './pages/StaffPage'
+
+function PrivateRoute({ children, ready }) {
+  const token = useAdminStore(s => s.token)
+  if (!ready) return null
+  return token ? children : <div style={{ padding: 24, color: 'red' }}>Нет доступа</div>
+}
 
 export default function App() {
-  const { token, setToken, setUser, clearAuth } = useStore()
+  const { token, setToken, logout } = useAdminStore()
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
     const tg = window.Telegram?.WebApp
@@ -20,30 +26,40 @@ export default function App() {
 
     const boot = async () => {
       const initData = tg?.initData
+
       try {
-        if (initData) {
-          const res = await authApi.initTelegram(initData)
-          setToken(res.data.access_token)
-        }
-        const me = await authApi.me()
-        setUser(me.data)
+        if (!initData) throw new Error('No initData')
+
+        const { authApi } = await import('./api/api')
+        const data = await authApi.loginTelegram(initData)
+        setToken(data.access_token)
       } catch {
-        clearAuth()
+        logout()
+      } finally {
+        setReady(true)
       }
     }
 
     boot()
   }, [])
 
+  // слушаем 401 — токен протух
+  useEffect(() => {
+    if (!token) return
+    const handle = () => logout()
+    window.addEventListener('unauthorized', handle)
+    return () => window.removeEventListener('unauthorized', handle)
+  }, [token])
+
   return (
     <HashRouter>
       <Routes>
-        <Route path="/" element={<MainPage />} />
-        <Route path="/menu" element={<MenuPage />} />
-        <Route path="/product/:id" element={<ProductPage />} />
-        <Route path="/cart" element={<CartPage />} />
-        <Route path="/orders" element={<OrdersPage />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="/"         element={<PrivateRoute ready={ready}><DashboardPage /></PrivateRoute>} />
+        <Route path="/orders"   element={<PrivateRoute ready={ready}><OrdersPage /></PrivateRoute>} />
+        <Route path="/menu"     element={<PrivateRoute ready={ready}><MenuPage /></PrivateRoute>} />
+        <Route path="/branches" element={<PrivateRoute ready={ready}><BranchesPage /></PrivateRoute>} />
+        <Route path="/staff"    element={<PrivateRoute ready={ready}><StaffPage /></PrivateRoute>} />
+        <Route path="*"         element={<Navigate to="/" replace />} />
       </Routes>
     </HashRouter>
   )

@@ -1,122 +1,66 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useEffect, useState } from 'react'
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
+import useAdminStore from './store/useAdminStore'
+import DashboardPage from './pages/DashboardPage'
+import OrdersPage from './pages/OrdersPage'
+import MenuPage from './pages/MenuPage'
+import BranchesPage from './pages/BranchesPage'
+import StaffPage from './pages/StaffPage'
 
-function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+function PrivateRoute({ children, ready }) {
+  const token = useAdminStore(s => s.token)
+  if (!ready) return null
+  return token ? children : <div style={{ padding: 24, color: 'red' }}>Нет доступа</div>
 }
 
-export default App
+export default function App() {
+  const { token, setToken, logout } = useAdminStore()
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    const tg = window.Telegram?.WebApp
+    if (tg) {
+      tg.ready()
+      tg.expand()
+    }
+
+    const boot = async () => {
+      const initData = tg?.initData
+
+      try {
+        if (!initData) throw new Error('No initData')
+
+        const { authApi } = await import('./api/api')
+        const data = await authApi.loginTelegram(initData)
+        setToken(data.access_token)
+      } catch {
+        logout()
+      } finally {
+        setReady(true)
+      }
+    }
+
+    boot()
+  }, [])
+
+  // слушаем 401 — токен протух
+  useEffect(() => {
+    if (!token) return
+    const handle = () => logout()
+    window.addEventListener('unauthorized', handle)
+    return () => window.removeEventListener('unauthorized', handle)
+  }, [token])
+
+  return (
+    <HashRouter>
+      <Routes>
+        <Route path="/"         element={<PrivateRoute ready={ready}><DashboardPage /></PrivateRoute>} />
+        <Route path="/orders"   element={<PrivateRoute ready={ready}><OrdersPage /></PrivateRoute>} />
+        <Route path="/menu"     element={<PrivateRoute ready={ready}><MenuPage /></PrivateRoute>} />
+        <Route path="/branches" element={<PrivateRoute ready={ready}><BranchesPage /></PrivateRoute>} />
+        <Route path="/staff"    element={<PrivateRoute ready={ready}><StaffPage /></PrivateRoute>} />
+        <Route path="*"         element={<Navigate to="/" replace />} />
+      </Routes>
+    </HashRouter>
+  )
+}
