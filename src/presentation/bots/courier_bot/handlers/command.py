@@ -6,6 +6,7 @@ from src.core.application.use_cases.verify_courier_access_use_case import Verify
 from src.core.domain.exceptions.access import DomainAccessDeniedError
 from ..keyboards.inline import InlineKb as ikb
 from src.shared.dto.auth_dto import UserTelegramDTO
+from src.core.application.exceptions.auth import ForbiddenError
 
 
 router = Router()
@@ -27,5 +28,5 @@ async def cmd_start(msg: Message, use_case: VerifyCourierAccessUseCase):
         )
         await msg.answer(text, reply_markup=ikb.get_mini_app_kb())
 
-    except DomainAccessDeniedError:
+    except ForbiddenError:
         await msg.answer("У вас не достаточно доступа для этой сообшение")

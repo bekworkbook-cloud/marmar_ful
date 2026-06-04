@@ -21,7 +21,8 @@ http.interceptors.response.use(
 export const authApi = {
   initTelegram: (initData) =>
     http.post('/auth/init_data/courier_bot', {}, {
-      headers: { 'x-telegram-init-data': initData },
+      headers: { 'x-telegram-init-data': initData , 
+        'ngrok-skip-browser-warning': 'true'},
     }),
   login: (username, password) =>
     http.post('/auth/login', { username, password }),

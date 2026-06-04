@@ -5,6 +5,7 @@ from src.core.domain.exceptions.access import DomainAccessDeniedError
 from src.core.application.use_cases.verify_operator_access_use_case import VerifyOperatorAccessUseCase
 from src.shared.dto.auth_dto import UserTelegramDTO
 from ..keyboards.inline import InliineKB as ikb
+from src.core.application.exceptions.auth import ForbiddenError
 
 
 router = Router()
@@ -23,6 +24,6 @@ async def cmd_start(msg: Message, use_case: VerifyOperatorAccessUseCase):
         await use_case.execute(user_telegram_dto)  
         text = "text" # welcome text for operators
         await msg.answer(text=text, reply_markup=ikb.get_mini_app_button()) 
-    except DomainAccessDeniedError:
+    except ForbiddenError:
         await msg.answer("У вас не достаточно прав")
 
