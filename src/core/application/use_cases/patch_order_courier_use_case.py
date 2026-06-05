@@ -1,6 +1,7 @@
 from src.core.domain.interfaces.order_repo import OrderRepository
 from src.core.application.use_cases.dtos.order_dtos import OrderDTO, OrderPersonnelUpdateDTO
 from src.core.application.exceptions.not_found_exception import NotFoundException
+from src.core.domain.enums.order_status import OrderStatus
 
 
 class PatchOrderCourierUseCase:
@@ -15,6 +16,9 @@ class PatchOrderCourierUseCase:
         
         order_entity.change_courier(
             courier_id=order_personnel_update_dto.courier_id
+        )
+        order_entity.change_status(
+            new_status=OrderStatus.COURIER_ASSIGNED.value
         )
         
         updated_entity = await self.order_repo.update(order_entity)

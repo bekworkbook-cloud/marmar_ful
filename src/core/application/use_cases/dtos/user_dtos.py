@@ -26,11 +26,11 @@ class UserIdDTO(BaseModel):
 
 class GetUserDTO(BaseModel):
     id: int
-    telegram_id: int
+    telegram_id: int | None = None
     first_name: Optional[str] = None
-    username: str
-    role: str    
-    branch_id: int
+    username: str | None = None
+    role: str
+    branch_id: int | None = None
 
 class GetUsersDTO(BaseModel):
     items: list[GetUserDTO]

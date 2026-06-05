@@ -6,7 +6,8 @@ import useStore from '../store/useStore'
 const STATUS_STYLE = {
   pending:               { badge: 'bg-amber-100 text-amber-700',   label: 'Ожидает' },
   awaiting_confirmation: { badge: 'bg-yellow-100 text-yellow-700', label: 'Ожидает подтверждения' },
-  confirmed:             { badge: 'bg-blue-100 text-blue-700',     label: 'Принят' },
+  confirmed:             { badge: 'bg-gray-100 text-gray-700',     label: 'Принят' },
+  courier_assigned:      { badge: 'bg-blue-100 text-blue-700',     label: 'Курьер назначен' },
   preparing:             { badge: 'bg-orange-100 text-orange-700', label: 'Готовится' },
   in_transit:            { badge: 'bg-violet-100 text-violet-700', label: 'В пути' },
   delivered:             { badge: 'bg-green-100 text-green-700',   label: 'Доставлен' },
@@ -14,7 +15,8 @@ const STATUS_STYLE = {
   cancelled:             { badge: 'bg-red-100 text-red-700',       label: 'Отменён' },
 }
 
-const ACTIVE_STATUSES  = ['confirmed', 'preparing', 'in_transit']
+// Добавили courier_assigned в активные статусы
+const ACTIVE_STATUSES  = ['confirmed', 'courier_assigned', 'preparing', 'in_transit']
 const HISTORY_STATUSES = ['delivered', 'closed', 'cancelled']
 
 export default function CourierDashboardPage() {

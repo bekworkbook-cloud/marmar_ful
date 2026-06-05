@@ -7,6 +7,7 @@ export const STATUS_TABS = [
   { key: 'pending',               label: 'Новые' },
   { key: 'awaiting_confirmation', label: 'Ожидают' },
   { key: 'confirmed',             label: 'Приняты' },
+  { key: 'courier_assigned',      label: 'С курьером' },
   { key: 'preparing',             label: 'Готовятся' },
   { key: 'in_transit',            label: 'В пути' },
   { key: 'delivered',             label: 'Доставлены' },
@@ -18,7 +19,8 @@ export const STATUS_TABS = [
 export const STATUS_STYLE = {
   pending:               { dot: 'bg-amber-400',  badge: 'bg-amber-100 text-amber-700',   label: 'Новый' },
   awaiting_confirmation: { dot: 'bg-yellow-400', badge: 'bg-yellow-100 text-yellow-700', label: 'Ожидает подтверждения' },
-  confirmed:             { dot: 'bg-blue-400',   badge: 'bg-blue-100 text-blue-700',     label: 'Принят' },
+  confirmed:             { dot: 'bg-gray-400',   badge: 'bg-gray-100 text-gray-700',     label: 'Принят' },
+  courier_assigned:      { dot: 'bg-blue-400',   badge: 'bg-blue-100 text-blue-700',     label: 'Курьер назначен' },
   preparing:             { dot: 'bg-orange-400', badge: 'bg-orange-100 text-orange-700', label: 'Готовится' },
   in_transit:            { dot: 'bg-violet-400', badge: 'bg-violet-100 text-violet-700', label: 'В пути' },
   delivered:             { dot: 'bg-green-400',  badge: 'bg-green-100 text-green-700',   label: 'Доставлен' },
@@ -159,6 +161,7 @@ export default function DashboardPage() {
                     : '—'}
                 </span>
                 <div className="flex items-center gap-3">
+                  {/* Благодаря новому статусу и этому условию мы имеем двойной контроль визуализации */}
                   {order.courier_id
                     ? <span className="text-xs text-green-600 font-medium">✓ Курьер назначен</span>
                     : <span className="text-xs text-amber-500 font-medium">Курьер не назначен</span>

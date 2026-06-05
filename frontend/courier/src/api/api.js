@@ -40,7 +40,7 @@ export const authApi = {
 
 export const orderApi = {
   list: (params = {}) =>
-    http.get('/orders', { params: { limit: 50, ...params } }),
+    http.get('/orders/', { params: { limit: 50, ...params } }),
   get: (id) => http.get(`/orders/${id}`),
   items: (id) => http.get(`/orders/${id}/items`),
   updateStatus: (id, status) =>

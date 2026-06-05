@@ -17,6 +17,7 @@ class GetUsersUseCase:
             limit=limit,
             offset=offset
         )
+        print(user_entities)
         
         users_dto_list = [
             GetUserDTO(
@@ -29,5 +30,6 @@ class GetUsersUseCase:
             )
             for user in user_entities
         ]
+        print(users_dto_list)
         return GetUsersDTO(items=users_dto_list)
         

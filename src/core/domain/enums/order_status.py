@@ -10,6 +10,7 @@ class OrderStatus(enum.Enum):
     # --- 3. Обработка заведением / магазином ---
     AWAITING_CONFIRMATION = "awaiting_confirmation" # ожидает подтверждения оператора (оплачено или выбрана оплата при получении)
     CONFIRMED = "confirmed" # подтвержден (оператор принял заказ в работу)
+    COURIER_ASSIGNED = "courier_assigned" # на заказ назначен курьер
     PREPARING = "preparing" # подготовка заказа (повара готовят / кладовщики собирают)
 
     # --- 4. Доставка ---

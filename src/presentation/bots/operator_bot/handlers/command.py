@@ -22,7 +22,7 @@ async def cmd_start(msg: Message, use_case: VerifyOperatorAccessUseCase):
 
     try:
         await use_case.execute(user_telegram_dto)  
-        text = "text" # welcome text for operators
+        text = "Добропожаловать, Вам доступен панель оператора" # welcome text for operators
         await msg.answer(text=text, reply_markup=ikb.get_mini_app_button()) 
     except ForbiddenError:
         await msg.answer("У вас не достаточно прав")

@@ -4,23 +4,25 @@ import { orderApi, userApi } from '../api/api'
 import useStore from '../store/useStore'
 
 const STATUS_OPTIONS = [
-  // { value: 'awaiting_confirmation', label: 'Ожидает подтверждения' },
+  { value: 'awaiting_confirmation', label: 'Ожидает подтверждения' },
   { value: 'confirmed',             label: 'Принят' },
-  // { value: 'preparing',             label: 'Готовится' },
-  // { value: 'in_transit',            label: 'В пути' },
-  // { value: 'delivered',             label: 'Доставлен' },
-  // { value: 'closed',                label: 'Закрыт' },
+  { value: 'courier_assigned',      label: 'Курьер назначен' },
+  { value: 'preparing',             label: 'Готовится' },
+  { value: 'in_transit',            label: 'В пути' },
+  { value: 'delivered',             label: 'Доставлен' },
+  { value: 'closed',                label: 'Закрыт' },
   { value: 'cancelled',             label: 'Отменён' },
 ]
 
 const STATUS_STYLE = {
-  // pending:               'bg-amber-100 text-amber-700',
-  // awaiting_confirmation: 'bg-yellow-100 text-yellow-700',
-  confirmed:             'bg-blue-100 text-blue-700',
-  // preparing:             'bg-orange-100 text-orange-700',
-  // in_transit:            'bg-violet-100 text-violet-700',
-  // delivered:             'bg-green-100 text-green-700',
-  // closed:                'bg-green-100 text-green-800',
+  pending:               'bg-amber-100 text-amber-700',
+  awaiting_confirmation: 'bg-yellow-100 text-yellow-700',
+  confirmed:             'bg-gray-100 text-gray-700',
+  courier_assigned:      'bg-blue-100 text-blue-700',
+  preparing:             'bg-orange-100 text-orange-700',
+  in_transit:            'bg-violet-100 text-violet-700',
+  delivered:             'bg-green-100 text-green-700',
+  closed:                'bg-green-100 text-green-800',
   cancelled:             'bg-red-100 text-red-700',
 }
 
@@ -67,7 +69,7 @@ export default function OrderDetailsPage() {
     }
 
     load()
-  }, [id])
+  }, [id, navigate])
 
   const handleStatus = async (status) => {
     setSaving(true)
@@ -157,22 +159,31 @@ export default function OrderDetailsPage() {
             <div className="bg-white rounded-2xl p-4 shadow-sm">
               <h3 className="font-semibold text-gray-800 mb-3">Изменить статус</h3>
               <div className="grid grid-cols-1 gap-2">
-                {STATUS_OPTIONS.map(opt => (
-                  <button
-                    key={opt.value}
-                    onClick={() => handleStatus(opt.value)}
-                    disabled={saving || order.status === opt.value}
-                    className={`py-2.5 px-4 rounded-xl text-sm font-medium text-left transition-all disabled:opacity-50
-                      ${order.status === opt.value
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-gray-50 text-gray-700 active:bg-gray-100'}`}
-                  >
-                    {order.status === opt.value && '✓ '}{opt.label}
-                  </button>
-                ))}
+                {/* Кнопка Принять */}
+                <button
+                  onClick={() => handleStatus('confirmed')}
+                  disabled={saving || order.status === 'confirmed'}
+                  className={`py-2.5 px-4 rounded-xl text-sm font-medium text-left transition-all disabled:opacity-50
+                    ${order.status === 'confirmed'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-gray-50 text-gray-700 active:bg-gray-100'}`}
+                >
+                  {order.status === 'confirmed' && '✓ '}Принять
+                </button>
+
+                {/* Кнопка Отменить */}
+                <button
+                  onClick={() => handleStatus('cancelled')}
+                  disabled={saving || order.status === 'cancelled'}
+                  className={`py-2.5 px-4 rounded-xl text-sm font-medium text-left transition-all disabled:opacity-50
+                    ${order.status === 'cancelled'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-gray-50 text-gray-700 active:bg-gray-100'}`}
+                >
+                  {order.status === 'cancelled' && '✓ '}Отменить
+                </button>
               </div>
             </div>
-
 
             {/* Couriers */}
             <div className="bg-white rounded-2xl p-4 shadow-sm">

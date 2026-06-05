@@ -19,3 +19,4 @@ class OrderRepository(ABC):
     @abstractmethod
     async def get_list(self, limit: int = 10, offset: int = 0, **filters) -> list[Order]:
         pass
+

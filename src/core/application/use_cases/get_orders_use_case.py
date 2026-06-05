@@ -13,6 +13,7 @@ class GetOrdersUseCase:
         user_id = get_orders_input_dto.current_user_id
         user_entity = await self.user_repo.get_by_id(user_id)
 
+        print(get_orders_input_dto)
 
         if role == UserRole.CUSTOMER.value:
             order_entities = await self.order_repo.get_list(
@@ -23,12 +24,12 @@ class GetOrdersUseCase:
         elif role == UserRole.COURIER.value:
             order_entities = await self.order_repo.get_list(
                 limit=get_orders_input_dto.limit,
-                offset=get_orders_input_dto.offset,
+                offset=get_orders_input_dto.offset | 0,
                 courier_id=user_id
             )
             order_entities += await self.order_repo.get_list(
                 limit=get_orders_input_dto.limit,
-                offset=get_orders_input_dto.offset,
+                offset=get_orders_input_dto.offset | 0,
                 courier_id=None
             )
             
