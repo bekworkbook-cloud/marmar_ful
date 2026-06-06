@@ -44,9 +44,9 @@ class TokenDataDTO(BaseModel):
 
 class UserTelegramDTO(BaseModel):
     telegram_id: int
-    username: str | None
+    username: str | None = None
     first_name: str
 
 class UserTelegramInitionDTO(BaseModel):
     user: UserTelegramDTO
-    username: str
+    username: str | None = None
