@@ -5,7 +5,7 @@ import useStore from '../store/useStore'
 
 // Изменили цепочку: теперь из 'confirmed' (Принят) курьер сразу переходит к 'in_transit' (Выехать в путь)
 const STATUS_FLOW = [
-  { value: 'confirmed',        label: 'Принят',          next: 'in_transit',       nextLabel: 'Выехать в путь' },
+  { value: 'confirmed',        label: 'Принят',          next: 'courier_assigned',       nextLabel: 'Взять заказ' },
   { value: 'courier_assigned', label: 'Курьер назначен', next: 'in_transit',       nextLabel: 'Выехать в путь' }, // Оставили для обратной совместимости, если бэкенд вернет этот статус
   { value: 'in_transit',       label: 'Доставляется',    next: 'delivered',        nextLabel: 'Доставлено' },
   { value: 'delivered',        label: 'Доставлен',       next: null,               nextLabel: null },
@@ -224,7 +224,8 @@ export default function DeliveryPage() {
             ) : (
               <>
                 <span>
-                  {flow.next === 'in_transit' ? '🏍️' : '✓'}
+                  {flow.next === 'courier_assigned' ? '✋' : 
+                   flow.next === 'in_transit' ? '🏍️' : '✓'}
                 </span>
                 <span>{flow.nextLabel}</span>
               </>
